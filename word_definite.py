@@ -101,3 +101,61 @@ def Get_Conflicts(nodelist_new):
                     conflicts_Dict[i].append(j)
                     conflicts_Dict[j].append(i)
     return dict(conflicts_Dict)
+   
+
+"""
+################################################################################################
+######################  CREATING FEATURE MATRICES ##############################################
+################################################################################################
+"""
+mat_lem2cng_countonly = pickle.load(open('../NewData/ultimate_new_lastsem/mat_lem2cng_countonly.p', 'rb'))
+mat_cng2lem_countonly = pickle.load(open('../NewData/ultimate_new_lastsem/mat_cng2lem_countonly.p', 'rb'))
+mat_lem2cng_1D = pickle.load(open('../NewData/ultimate_new_lastsem/mat_lem2cng_1D.p', 'rb'))
+mat_cng2lem_1D = pickle.load(open('../NewData/ultimate_new_lastsem/mat_cng2lem_1D.p', 'rb'))
+_edge_vector_dim = len(mat_cng2lem_1D)
+_full_cnglist = list(mat_cng2lem_1D)
+ 
+def Get_Feat_Vec_Matrix(nodelist_new, conflicts_Dict):
+    nodesCount = len(nodelist_new)
+    featVMat = [[None for _ in range(nodesCount)] for _ in range(nodesCount)]
+    for i in range(nodesCount):
+        for j in range(nodesCount):
+            if j in conflicts_Dict[i] or i == j:                
+                # featVMat[i][j][:] = 1e-35
+                pass
+            else:
+                wd1 = nodelist_new[i]
+                wd2 = nodelist_new[j]
+                featVMat[i][j] = np.zeros((_edge_vector_dim, 1))
+                # print('For ', wd1, wd2)
+                for k in range(_edge_vector_dim):
+                    cng_k = _full_cnglist[k]
+                    # TODO: Some lemma's still missing
+                    try:
+                        pleft = float(mat_lem2cng_countonly[wd1.lemma][cng_k]) / mat_lem2cng_1D[wd1.lemma]
+                    except KeyError:
+                        pleft = 0
+                    try:
+                        pright = float(mat_cng2lem_countonly[cng_k][wd2.lemma]) / mat_cng2lem_1D[cng_k]
+                    except KeyError:
+                        pright = 0
+                        
+                    featVMat[i][j][k] = pleft * pright                
+    return featVMat
+
+# This function will be some neural network or a linear function or something of sorts
+def Get_W_Scalar_Matrix_from_FeatVect_Matrix(featVMat, nodelist_new, conflicts_Dict, _neuralnet):
+    nodesCount = len(nodelist_new)
+    WScalarMat = np.zeros((nodesCount, nodesCount))   
+    for i in range(nodesCount):
+        for j in range(nodesCount):
+            if featVMat[i][j] is None:
+                pass
+            else:
+                # Since s is output of a sigmoid gate, it will always be greater than zero
+                (_, _, s) = _neuralnet.Forward_Prop(featVMat[i][j])
+                WScalarMat[i, j] = s
+    toinf = (WScalarMat == 0)
+    WScalarMat[WScalarMat > 0] = -np.log2(WScalarMat[WScalarMat > 0])  
+    WScalarMat[toinf] = np.inf
+    return WScalarMat
