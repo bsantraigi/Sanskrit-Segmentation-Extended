@@ -105,16 +105,23 @@ def Get_Conflicts(nodelist_new):
 
 """
 ################################################################################################
-######################  CREATING FEATURE MATRICES ##############################################
+##################### LOAD PROBABILITY MATRICES  ## LEMMA, CNG, CNG_GROUP # ####################
 ################################################################################################
 """
 mat_lem2cng_countonly = pickle.load(open('../NewData/ultimate_new_lastsem/mat_lem2cng_countonly.p', 'rb'))
 mat_cng2lem_countonly = pickle.load(open('../NewData/ultimate_new_lastsem/mat_cng2lem_countonly.p', 'rb'))
 mat_lem2cng_1D = pickle.load(open('../NewData/ultimate_new_lastsem/mat_lem2cng_1D.p', 'rb'))
 mat_cng2lem_1D = pickle.load(open('../NewData/ultimate_new_lastsem/mat_cng2lem_1D.p', 'rb'))
+
 _edge_vector_dim = len(mat_cng2lem_1D)
 _full_cnglist = list(mat_cng2lem_1D)
  
+
+"""
+################################################################################################
+######################  CREATING FEATURE MATRICES ##############################################
+################################################################################################
+"""
 def Get_Feat_Vec_Matrix(nodelist_new, conflicts_Dict):
     nodesCount = len(nodelist_new)
     featVMat = [[None for _ in range(nodesCount)] for _ in range(nodesCount)]

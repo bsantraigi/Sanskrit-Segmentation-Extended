@@ -14,9 +14,20 @@ from nnet import *
 from heap_n_PrimMST import *
 from word_definite import *
 
-loaded_SKT = pickle.load(open('../Simultaneous_CompatSKT_10K.p', 'rb'))
-loaded_DCS = pickle.load(open('../Simultaneous_DCS_10K.p', 'rb'))
+"""
+################################################################################################
+###########################  LOAD SENTENCE AND DCS OBJECT FILES  ###############################
+################################################################################################
+"""
+# loaded_SKT = pickle.load(open('../Simultaneous_CompatSKT_10K.p', 'rb'))
+# loaded_DCS = pickle.load(open('../Simultaneous_DCS_10K.p', 'rb'))
 
+
+"""
+################################################################################################
+######################  CREATE SEVERAL DATA STRUCTURES FROM SENTENCE/DCS  ######################
+###########################  NODELIST, ADJACENCY LIST, GRAPH, HEAP #############################
+"""
 def GetTrainingKit(sentenceObj, dcsObj):
     nodelist = GetNodes(sentenceObj)
     
@@ -40,70 +51,167 @@ def GetTrainingKit(sentenceObj, dcsObj):
             nodelist_correct.append(nodelist2[search_key])
     return (nodelist, nodelist_correct, nodelist2_to_correct_mapping)
     
-_edge_vector_dim = len(mat_cng2lem_1D)
-_full_cnglist = list(mat_cng2lem_1D)
 
-neuralnet = NN(_edge_vector_dim, 200)
+def GetGraph(nodelist, neuralnet):
+    conflicts_Dict = Get_Conflicts(nodelist)
 
-# Train
+    featVMat = Get_Feat_Vec_Matrix(nodelist, conflicts_Dict)
 
-for iterout in range(10):
-    # Change batch
-    print('ITERATION OUT', iterout)
-    perm = np.random.permutation(len(loaded_SKT))[0:100]
-    print('Permutation: ', perm)    
-    pickle.dump(neuralnet, open('outputs/neuralnet_trained.p', 'wb'))
+    WScalarMat = Get_W_Scalar_Matrix_from_FeatVect_Matrix(featVMat, nodelist, conflicts_Dict, neuralnet)
+    return (conflicts_Dict, featVMat, WScalarMat)
+
+"""
+################################################################################################
+##############################  MAIN FUNCTION  #################################################
+################################################################################################
+"""
+def main(loaded_SKT, loaded_DCS):
+    # Train
+    for iterout in range(10):
+        # Change batch
+        print('ITERATION OUT', iterout)
+        perm = np.random.permutation(len(loaded_SKT))[0:100]
+        print('Permutation: ', perm)    
+        trainer.Save('outputs/neuralnet_trained.p')
+        # trainer.Load('outputs/neuralnet_trained.p')
+        
+        # Run few times on same set of files
+        for iterin in range(5):
+            print('ITERATION IN', iterin)        
+            for fn in perm:
+                sentenceObj = loaded_SKT[list(loaded_SKT.keys())[fn]]
+                dcsObj = loaded_DCS[list(loaded_SKT.keys())[fn]]
+                trainer.Train(sentenceObj, dcsObj)     
+                
+def test(loaded_SKT, loaded_DCS):
+    perm = np.random.permutation(100)[0:10]
+    print('Permutation: ', perm)
+    for fn in perm:
+        sentenceObj = loaded_SKT[list(loaded_SKT.keys())[fn]]
+        dcsObj = loaded_DCS[list(loaded_SKT.keys())[fn]]   
+        trainer.Test(sentenceObj, dcsObj)
+                
+class Trainer:
+    def __init__(self):
+        self._edge_vector_dim = len(mat_cng2lem_1D)
+        self._full_cnglist = list(mat_cng2lem_1D)
+        self.neuralnet = NN(self._edge_vector_dim, 200)
+        
+    def Reset():
+        self.neuralnet = NN(self._edge_vector_dim, 200)
+        
+    def Save(self, filename):
+        pickle.dump(self.neuralnet, open(filename, 'wb'))
     
-    # Run few times on same set of files
-    for iterin in range(5):
-        print('ITERATION IN', iterin)        
-        for fn in perm:
-            sentenceObj = loaded_SKT[list(loaded_SKT.keys())[fn]]
-            dcsObj = loaded_DCS[list(loaded_SKT.keys())[fn]]
-            # (chunkDict, lemmaList, wordList, revMap2Chunk, qu, cngList, verbs, tuplesMain, qc_pairs) = SentencePreprocess(sentenceObj)
-            try:
-                (nodelist, nodelist_correct, nodelist_to_correct_mapping) = GetTrainingKit(sentenceObj, dcsObj)
-            except IndexError:
-                # print('Error with ', fn)
-                continue
+    def Load(self, filename):
+        self.neuralnet = pickle.load(open(filename, 'rb'))
+        
+    def Train(self, sentenceObj, dcsObj):
+        try:
+            (nodelist, nodelist_correct, nodelist_to_correct_mapping) = GetTrainingKit(sentenceObj, dcsObj)
+        except IndexError:
+            # print('Error with ', fn)
+            return
+            
+        
+        """ FOR MST OF GRAPH WITH ONLY CORRECT SET OF NODES """
+        (conflicts_Dict_correct, featVMat_correct, WScalarMat_correct) = GetGraph(nodelist_correct, self.neuralnet)
 
-            conflicts_Dict = Get_Conflicts(nodelist)
-            conflicts_Dict_correct = Get_Conflicts(nodelist_correct)
+        
+        # Get MST for the correct nodelist
+        source = 0
+        (mst_nodes_correct, mst_adj_graph_correct_0) = MST(nodelist_correct, WScalarMat_correct, conflicts_Dict_correct, source)
+    #     print('Correct MST Score: ', GetMSTWeight(mst_nodes_correct, WScalarMat_correct))
+        W_star = GetMSTWeight(mst_nodes_correct, WScalarMat_correct)
+        
+        """ FOR ALL POSSIBLE MST FROM THE COMPLETE GRAPH """                
+        (conflicts_Dict, featVMat, WScalarMat) = GetGraph(nodelist, self.neuralnet)        
+        
+        Total_Loss = 0
 
-            featVMat = Get_Feat_Vec_Matrix(nodelist, conflicts_Dict)
-            featVMat_correct = Get_Feat_Vec_Matrix(nodelist_correct, conflicts_Dict_correct)
+        # Convert correct spanning tree graph adj matrix to actual marix dimensions
+        # Create full-size adjacency matrix for correct_mst
+        nodelen = len(nodelist)
+        mst_adj_graph_correct = np.ndarray((nodelen, nodelen), np.bool)*False
+        for i in range(mst_adj_graph_correct_0.shape[0]):
+            for j in range(mst_adj_graph_correct_0.shape[1]):
+                mst_adj_graph_correct[nodelist_to_correct_mapping[i], nodelist_to_correct_mapping[j]] = \
+                mst_adj_graph_correct_0[i, j]
 
-            WScalarMat = Get_W_Scalar_Matrix_from_FeatVect_Matrix(featVMat, nodelist, conflicts_Dict, neuralnet)
-            WScalarMat_correct = Get_W_Scalar_Matrix_from_FeatVect_Matrix(featVMat_correct, nodelist_correct, conflicts_Dict_correct, neuralnet)
-            Total_Loss = 0
+        """ For each node - Find MST with that source"""
+        dLdS = np.zeros(WScalarMat.shape)
+        for source in range(len(nodelist)):
+        #     print('\nSOURCE: {}'.format(source))
+            (mst_nodes, mst_adj_graph) = MST(nodelist, WScalarMat, conflicts_Dict, source)    
+        #     print('Correct MST Score for Souce {}: {}'.format(source, GetMSTWeight(mst_nodes, WScalarMat)))
+            print('.', end = '')
 
-            # Get MST for the correct nodelist
-            source = 0
-            (mst_nodes_correct, mst_adj_graph_correct_0) = MST(nodelist_correct, WScalarMat_correct, conflicts_Dict_correct, source)
-        #     print('Correct MST Score: ', GetMSTWeight(mst_nodes_correct, WScalarMat_correct))
-            W_star = GetMSTWeight(mst_nodes_correct, WScalarMat_correct)
+            """ Gradient Descent"""
+            
+            Total_Loss += (W_star - GetMSTWeight(mst_nodes, WScalarMat))
+            dLdS_inner = 1 / WScalarMat
+            dLdS_inner[mst_adj_graph_correct == 1] *= -1
+            dLdS_inner = dLdS_inner*(mst_adj_graph^mst_adj_graph_correct)
+            dLdS += dLdS_inner        
+        self.neuralnet.Back_Prop(dLdS/len(nodelist), len(nodelist), featVMat)
 
-            # Convert correct spanning tree graph adj matrix to actual marix dimensions
-            nodelen = len(nodelist)
-            mst_adj_graph_correct = np.ndarray((nodelen, nodelen), np.bool)*False
-            for i in range(mst_adj_graph_correct_0.shape[0]):
-                for j in range(mst_adj_graph_correct_0.shape[1]):
-                    mst_adj_graph_correct[nodelist_to_correct_mapping[i], nodelist_to_correct_mapping[j]] = \
-                    mst_adj_graph_correct_0[i, j]
+        Total_Loss /= len(nodelist)
+        print("\nFileKey: %s, Loss: %6.3f, Original MSTScore: %6.3f" % (sentenceObj.sent_id, Total_Loss, W_star))
+    def Test(self, sentenceObj, dcsObj):
+        neuralnet = self.neuralnet
+        minScore = np.inf
+        minMst = None
+        try:
+            (nodelist, nodelist_correct, _) = GetTrainingKit(sentenceObj, dcsObj)
+            # nodelist = GetNodes(sentenceObj)
+        except IndexError:
+            print('\x1b[31mError with {} \x1b[0m'.format(sentenceObj.sent_id))
+            return
+            
+        conflicts_Dict = Get_Conflicts(nodelist)
+        conflicts_Dict_correct = Get_Conflicts(nodelist_correct)
+        
+        featVMat = Get_Feat_Vec_Matrix(nodelist, conflicts_Dict)
+        featVMat_correct = Get_Feat_Vec_Matrix(nodelist_correct, conflicts_Dict_correct)
+        
+        WScalarMat = Get_W_Scalar_Matrix_from_FeatVect_Matrix(featVMat, nodelist, conflicts_Dict, neuralnet)
 
-            # Get all MST
-            dLdS = np.zeros(WScalarMat.shape)
-            for source in range(len(nodelist)):
-            #     print('\nSOURCE: {}'.format(source))
-                (mst_nodes, mst_adj_graph) = MST(nodelist, WScalarMat, conflicts_Dict, source)    
-            #     print('Correct MST Score for Souce {}: {}'.format(source, GetMSTWeight(mst_nodes, WScalarMat)))
+        # Get all MST
+        for source in range(len(nodelist)):
+            (mst_nodes, mst_adj_graph) = MST(nodelist, WScalarMat, conflicts_Dict, source)
+            print('.', end = '')
+            score = GetMSTWeight(mst_nodes, WScalarMat)
+            if(score < minScore):
                 print('.', end = '')
-                Total_Loss += (W_star - GetMSTWeight(mst_nodes, WScalarMat))
-                dLdS_inner = 1 / WScalarMat
-                dLdS_inner[mst_adj_graph_correct == 1] *= -1
-                dLdS_inner = dLdS_inner*(mst_adj_graph^mst_adj_graph_correct)
-                dLdS += dLdS_inner        
-            neuralnet.Back_Prop(dLdS/len(nodelist), len(nodelist), featVMat)
+                minScore = score
+                minMst = mst_nodes
+        dcsLemmas = [[rom_slp(l) for l in arr]for arr in dcsObj.lemmas]
+        full_match = 0
+        partial_match = 0
+        for chunk_id, wdSplit in mst_nodes.items():
+            for wd in wdSplit:
+                # Match lemma
+                search_result = [i for i, j in enumerate(dcsLemmas[chunk_id]) if j == wd.lemma]
+                if len(search_result) > 0:
+                    partial_match += 1
+                # Match CNG
+                for i in search_result:
+                    if(dcsObj.cng[chunk_id][i] == str(wd.cng)):
+                        full_match += 1
+                        # print(wd.lemma, wd.cng)
+                        break
+        dcsLemmas = [l for arr in dcsObj.lemmas for l in arr]
+        print('\nFull Match: {}, Partial Match: {}, OutOf {}, NodeCount: {}, '.\
+              format(full_match, partial_match, len(dcsLemmas), len(nodelist)))
 
-            Total_Loss /= len(nodelist)
-            print("\nFileKey: %5d, Loss: %6.3f, Original MSTScore: %6.3f" % (fn, Total_Loss, W_star))
+
+trainer = Trainer()
+
+"""
+################################################################################################
+################################################################################################
+################################################################################################
+"""
+if __name__ == '__main__':
+    #main(loaded_SKT, loaded_DCS)
+    print ("Not Implemented")
