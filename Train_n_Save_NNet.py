@@ -67,64 +67,75 @@ def GetGraph(nodelist, neuralnet):
 """
 def main(loaded_SKT, loaded_DCS):
     # Train
-    for iterout in range(10):
-        # Change batch
+    totalBatchToTrain = 1000
+    filePerBatch = 30
+    iterationPerBatch = 5
+    for iterout in range(totalBatchToTrain):
+        # Change current batch
         print('ITERATION OUT', iterout)
-        perm = np.random.permutation(len(loaded_SKT))[0:100]
-        print('Permutation: ', perm)    
-        trainer.Save('outputs/neuralnet_trained.p')
+        perm = np.random.permutation(len(loaded_SKT))[0:filePerBatch]
+        print('Permutation: ', perm)
         # trainer.Load('outputs/neuralnet_trained.p')
         
         # Run few times on same set of files
-        for iterin in range(5):
+        for iterin in range(iterationPerBatch):
             print('ITERATION IN', iterin)        
             for fn in perm:
                 sentenceObj = loaded_SKT[list(loaded_SKT.keys())[fn]]
                 dcsObj = loaded_DCS[list(loaded_SKT.keys())[fn]]
+                trainer.Save('outputs/saved_trainer.p')
                 trainer.Train(sentenceObj, dcsObj)     
                 
-def test(loaded_SKT, loaded_DCS):
-    perm = np.random.permutation(100)[0:10]
-    print('Permutation: ', perm)
-    for fn in perm:
-        sentenceObj = loaded_SKT[list(loaded_SKT.keys())[fn]]
-        dcsObj = loaded_DCS[list(loaded_SKT.keys())[fn]]   
-        trainer.Test(sentenceObj, dcsObj)
+def test(loaded_SKT, loaded_DCS, perm = None):
+    if perm is None:
+        perm = np.random.permutation(100)[0:10]
+        print('Permutation: ', perm)
+        for fn in perm:
+            sentenceObj = loaded_SKT[list(loaded_SKT.keys())[fn]]
+            dcsObj = loaded_DCS[list(loaded_SKT.keys())[fn]]   
+            trainer.Test(sentenceObj, dcsObj)
+    else:
+        print('Permutation: ', perm)
+        for fn in perm:
+            sentenceObj = loaded_SKT[list(loaded_SKT.keys())[fn]]
+            dcsObj = loaded_DCS[list(loaded_SKT.keys())[fn]]
+            trainer.Test(sentenceObj, dcsObj)
                 
 class Trainer:
     def __init__(self):
         self._edge_vector_dim = len(mat_cng2lem_1D)
         self._full_cnglist = list(mat_cng2lem_1D)
         self.neuralnet = NN(self._edge_vector_dim, 200)
+        self.history = defaultdict(lambda: list())
         
-    def Reset():
+    def Reset(self):
         self.neuralnet = NN(self._edge_vector_dim, 200)
+        self.history = defaultdict(lambda: list())
         
     def Save(self, filename):
-        pickle.dump(self.neuralnet, open(filename, 'wb'))
+        pickle.dump({'nnet': self.neuralnet, 'history': dict(self.history)}, open(filename, 'wb'))
+        
     
     def Load(self, filename):
-        self.neuralnet = pickle.load(open(filename, 'rb'))
+        o = pickle.load(open(filename, 'rb'))
+        self.neuralnet = o['nnet']
+        self.history = defaultdict(lambda: list(), o['history'])
         
     def Train(self, sentenceObj, dcsObj):
         try:
             (nodelist, nodelist_correct, nodelist_to_correct_mapping) = GetTrainingKit(sentenceObj, dcsObj)
         except IndexError:
-            # print('Error with ', fn)
+            # print('\x1b[31mError with {} \x1b[0m'.format(sentenceObj.sent_id))
             return
             
         
         """ FOR MST OF GRAPH WITH ONLY CORRECT SET OF NODES """
         (conflicts_Dict_correct, featVMat_correct, WScalarMat_correct) = GetGraph(nodelist_correct, self.neuralnet)
-
-        
-        # Get MST for the correct nodelist
         source = 0
         (mst_nodes_correct, mst_adj_graph_correct_0) = MST(nodelist_correct, WScalarMat_correct, conflicts_Dict_correct, source)
-    #     print('Correct MST Score: ', GetMSTWeight(mst_nodes_correct, WScalarMat_correct))
         W_star = GetMSTWeight(mst_nodes_correct, WScalarMat_correct)
         
-        """ FOR ALL POSSIBLE MST FROM THE COMPLETE GRAPH """                
+        """ FOR ALL POSSIBLE MST FROM THE COMPLETE GRAPH """
         (conflicts_Dict, featVMat, WScalarMat) = GetGraph(nodelist, self.neuralnet)        
         
         Total_Loss = 0
@@ -141,10 +152,8 @@ class Trainer:
         """ For each node - Find MST with that source"""
         dLdS = np.zeros(WScalarMat.shape)
         for source in range(len(nodelist)):
-        #     print('\nSOURCE: {}'.format(source))
-            (mst_nodes, mst_adj_graph) = MST(nodelist, WScalarMat, conflicts_Dict, source)    
-        #     print('Correct MST Score for Souce {}: {}'.format(source, GetMSTWeight(mst_nodes, WScalarMat)))
-            print('.', end = '')
+            (mst_nodes, mst_adj_graph) = MST(nodelist, WScalarMat, conflicts_Dict, source)
+            # print('.', end = '')
 
             """ Gradient Descent"""
             
@@ -156,7 +165,9 @@ class Trainer:
         self.neuralnet.Back_Prop(dLdS/len(nodelist), len(nodelist), featVMat)
 
         Total_Loss /= len(nodelist)
-        print("\nFileKey: %s, Loss: %6.3f, Original MSTScore: %6.3f" % (sentenceObj.sent_id, Total_Loss, W_star))
+        self.history[sentenceObj.sent_id].append(Total_Loss)
+        # print("\nFileKey: %s, Loss: %6.3f, Original MSTScore: %6.3f" % (sentenceObj.sent_id, Total_Loss, W_star))
+        
     def Test(self, sentenceObj, dcsObj):
         neuralnet = self.neuralnet
         minScore = np.inf
@@ -175,7 +186,7 @@ class Trainer:
         featVMat_correct = Get_Feat_Vec_Matrix(nodelist_correct, conflicts_Dict_correct)
         
         WScalarMat = Get_W_Scalar_Matrix_from_FeatVect_Matrix(featVMat, nodelist, conflicts_Dict, neuralnet)
-
+        # print(WScalarMat)
         # Get all MST
         for source in range(len(nodelist)):
             (mst_nodes, mst_adj_graph) = MST(nodelist, WScalarMat, conflicts_Dict, source)
@@ -213,5 +224,7 @@ trainer = Trainer()
 ################################################################################################
 """
 if __name__ == '__main__':
-    #main(loaded_SKT, loaded_DCS)
-    print ("Not Implemented")
+    loaded_SKT = pickle.load(open('../Simultaneous_CompatSKT_10K.p', 'rb'))
+    loaded_DCS = pickle.load(open('../Simultaneous_DCS_10K.p', 'rb'))
+    main(loaded_SKT, loaded_DCS)
+    # print ("Not Implemented")

@@ -61,7 +61,7 @@ class NN:
         N = nodeLen
         dLdU = np.zeros(self.U.shape)
         dLdW = np.zeros(self.W.shape)
-        eta = 100
+        eta = 1000
         _actual_sample_count = 0
         for i in range(N):
             for j in range(N):
@@ -71,7 +71,7 @@ class NN:
                     dLdU += dLdS[i, j]*a2*d_sigmoid(s)
                     dRelu = d_relu(z2)
                     for k in range(self.n):
-                        dLdW[k, :] = dLdW[k, :] + ((dLdS[i, j])*self.U[k]*dRelu[k]*d_sigmoid(s))*featVMat[i][j].transpose()
+                        dLdW[k, :] += ((dLdS[i, j])*self.U[k]*dRelu[k]*d_sigmoid(s))*featVMat[i][j].transpose()
         
         self.W -= eta*dLdW
         self.U -= eta*dLdU

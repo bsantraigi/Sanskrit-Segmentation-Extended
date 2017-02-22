@@ -154,6 +154,7 @@ def Get_Feat_Vec_Matrix(nodelist_new, conflicts_Dict):
 def Get_W_Scalar_Matrix_from_FeatVect_Matrix(featVMat, nodelist_new, conflicts_Dict, _neuralnet):
     nodesCount = len(nodelist_new)
     WScalarMat = np.zeros((nodesCount, nodesCount))   
+    sigmoid_25 = 1/(1+np.exp(-25))
     for i in range(nodesCount):
         for j in range(nodesCount):
             if featVMat[i][j] is None:
@@ -161,8 +162,8 @@ def Get_W_Scalar_Matrix_from_FeatVect_Matrix(featVMat, nodelist_new, conflicts_D
             else:
                 # Since s is output of a sigmoid gate, it will always be greater than zero
                 (_, _, s) = _neuralnet.Forward_Prop(featVMat[i][j])
-                WScalarMat[i, j] = s
+                WScalarMat[i, j] = np.minimum(s, sigmoid_25)
     toinf = (WScalarMat == 0)
-    WScalarMat[WScalarMat > 0] = -np.log2(WScalarMat[WScalarMat > 0])  
+    WScalarMat[WScalarMat > 0] = -np.log2(WScalarMat[WScalarMat > 0])
     WScalarMat[toinf] = np.inf
     return WScalarMat
