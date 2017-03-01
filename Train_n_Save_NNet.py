@@ -8,11 +8,14 @@ from sentences import *
 from DCS import *
 from collections import defaultdict
 import math
-from word_definite import *
+
 from romtoslp import *
-from nnet import *
+
+from MatDB import *
+import word_definite as WD
 from heap_n_PrimMST import *
-from word_definite import *
+from nnet import *
+
 
 """
 ################################################################################################
@@ -42,9 +45,10 @@ def GetTrainingKit(sentenceObj, dcsObj):
             first_key += 1
         for j in range(len(dcsObj.lemmas[chunk_id])):
             search_key = first_key
-
-            while (nodelist2[search_key].lemma != rom_slp(dcsObj.lemmas[chunk_id][j])) or (nodelist2[search_key].cng != int(dcsObj.cng[chunk_id][j])):
+            while (nodelist2[search_key].lemma != rom_slp(dcsObj.lemmas[chunk_id][j])) or (nodelist2[search_key].cng != dcsObj.cng[chunk_id][j]):
                 search_key += 1
+                if search_key >= len(nodelist2) or nodelist2[search_key].chunk_id > chunk_id:
+                    break
     #         print((rom_slp(dcsObj.lemmas[chunk_id][j]), dcsObj.cng[chunk_id][j]))
     #         print(nodelist[search_key])
             nodelist2_to_correct_mapping[len(nodelist_correct)] = search_key
@@ -83,7 +87,7 @@ def main(loaded_SKT, loaded_DCS):
             for fn in perm:
                 sentenceObj = loaded_SKT[list(loaded_SKT.keys())[fn]]
                 dcsObj = loaded_DCS[list(loaded_SKT.keys())[fn]]
-                trainer.Save('outputs/saved_trainer.p')
+                # trainer.Save('outputs/saved_trainer.p')
                 trainer.Train(sentenceObj, dcsObj)     
                 
 def test(loaded_SKT, loaded_DCS, perm = None):
@@ -103,8 +107,8 @@ def test(loaded_SKT, loaded_DCS, perm = None):
                 
 class Trainer:
     def __init__(self):
-        self._edge_vector_dim = len(mat_cng2lem_1D)
-        self._full_cnglist = list(mat_cng2lem_1D)
+        self._edge_vector_dim = WD._edge_vector_dim
+        self._full_cnglist = list(WD.mat_cngCount_1D)
         self.neuralnet = NN(self._edge_vector_dim, 200)
         self.history = defaultdict(lambda: list())
         
@@ -124,8 +128,9 @@ class Trainer:
     def Train(self, sentenceObj, dcsObj):
         try:
             (nodelist, nodelist_correct, nodelist_to_correct_mapping) = GetTrainingKit(sentenceObj, dcsObj)
-        except IndexError:
+        except IndexError as e:
             # print('\x1b[31mError with {} \x1b[0m'.format(sentenceObj.sent_id))
+            print(e)
             return
             
         
@@ -166,7 +171,7 @@ class Trainer:
 
         Total_Loss /= len(nodelist)
         self.history[sentenceObj.sent_id].append(Total_Loss)
-        # print("\nFileKey: %s, Loss: %6.3f, Original MSTScore: %6.3f" % (sentenceObj.sent_id, Total_Loss, W_star))
+        print("\nFileKey: %s, Loss: %6.3f, Original MSTScore: %6.3f" % (sentenceObj.sent_id, Total_Loss, W_star))
         
     def Test(self, sentenceObj, dcsObj):
         neuralnet = self.neuralnet
@@ -216,7 +221,11 @@ class Trainer:
               format(full_match, partial_match, len(dcsLemmas), len(nodelist)))
 
 
-trainer = Trainer()
+trainer = None
+def InitModule(_matDB):
+    global WD, trainer
+    WD.word_definite_extInit(_matDB)
+    trainer = Trainer()
 
 """
 ################################################################################################

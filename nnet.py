@@ -45,7 +45,8 @@ class NN:
         self.n = hidden_layer_size
         self.d = input_dimension
         # rand_init_range = np.sqrt(6.0/(self.n+self.d))
-        rand_init_range = 10
+        # print(rand_init_range)
+        rand_init_range = 1e-3
         self.W = np.random.uniform(-rand_init_range, rand_init_range, (self.n, self.d))
         # rand_init_range = np.sqrt(6.0/(self.n))
         self.U = np.random.uniform(-rand_init_range, rand_init_range, (self.n, 1))
@@ -71,7 +72,7 @@ class NN:
                     dLdU += dLdS[i, j]*a2*d_sigmoid(s)
                     dRelu = d_relu(z2)
                     for k in range(self.n):
-                        dLdW[k, :] += ((dLdS[i, j])*self.U[k]*dRelu[k]*d_sigmoid(s))*featVMat[i][j].transpose()
+                        dLdW[k, :, None] += ((dLdS[i, j])*self.U[k]*dRelu[k]*d_sigmoid(s))*(featVMat[i][j])
         
         self.W -= eta*dLdW
         self.U -= eta*dLdU

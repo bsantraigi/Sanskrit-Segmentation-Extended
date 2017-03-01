@@ -8,7 +8,8 @@ class word_definite:
     def __init__(self,derived, lemma, cng, pos, chunk_id):
         self.lemma = lemma
         self.derived = derived
-        self.cng = cng
+        self.cng = str(cng)
+        self.tup = "{}_{}".format(self.lemma, self.cng)
         # self.form = form
         self.pos = pos
         self.chunk_id = chunk_id        
@@ -18,7 +19,7 @@ class word_definite:
         self.id = -1
         self.isConflicted = False
     def __str__(self):
-        return 'WD_Node[C: %d, P: %d, %s @(%d) => %s]' %(self.chunk_id, self.pos, self.lemma, self.cng, self.derived)
+        return 'WD_Node[C: %d, P: %d, %s @(%s) => %s]' %(self.chunk_id, self.pos, self.lemma, self.cng, self.derived)
     def __repr__(self):
         return str(self)
         
@@ -106,22 +107,279 @@ def Get_Conflicts(nodelist_new):
 """
 ################################################################################################
 ##################### LOAD PROBABILITY MATRICES  ## LEMMA, CNG, CNG_GROUP # ####################
-################################################################################################
+##############################  TUPLES ALSO  ###################################################
 """
-mat_lem2cng_countonly = pickle.load(open('../NewData/ultimate_new_lastsem/mat_lem2cng_countonly.p', 'rb'))
-mat_cng2lem_countonly = pickle.load(open('../NewData/ultimate_new_lastsem/mat_cng2lem_countonly.p', 'rb'))
-mat_lem2cng_1D = pickle.load(open('../NewData/ultimate_new_lastsem/mat_lem2cng_1D.p', 'rb'))
-mat_cng2lem_1D = pickle.load(open('../NewData/ultimate_new_lastsem/mat_cng2lem_1D.p', 'rb'))
+mat_lem2lem_countonly = None
+mat_lem2cng_countonly = None
+mat_lem2tup_countonly = None
 
-_edge_vector_dim = len(mat_cng2lem_1D)
-_full_cnglist = list(mat_cng2lem_1D)
- 
+mat_cng2lem_countonly = None
+mat_cng2cng_countonly = None
+mat_cng2tup_countonly = None
 
+mat_tup2lem_countonly = None
+mat_tup2cng_countonly = None
+mat_tup2tup_countonly = None
+
+mat_lemCount_1D = None
+mat_cngCount_1D = None
+mat_tupCount_1D = None
+
+_cg_count = None
+_edge_vector_dim = None
+_full_cnglist = None
+
+def word_definite_extInit(matDB):
+    global mat_lem2lem_countonly, mat_lem2cng_countonly, mat_lem2tup_countonly, \
+     mat_cng2lem_countonly, mat_cng2cng_countonly, mat_cng2tup_countonly, \
+     mat_tup2lem_countonly, mat_tup2cng_countonly, mat_tup2tup_countonly, \
+     mat_lemCount_1D, mat_cngCount_1D, mat_tupCount_1D, \
+     _cg_count, _full_cnglist, _edge_vector_dim
+
+    mat_lem2lem_countonly = matDB.mat_lem2lem_countonly
+    mat_lem2cng_countonly = matDB.mat_lem2cng_countonly
+    mat_lem2tup_countonly = matDB.mat_lem2tup_countonly
+
+    mat_cng2lem_countonly = matDB.mat_cng2lem_countonly
+    mat_cng2cng_countonly = matDB.mat_cng2cng_countonly
+    mat_cng2tup_countonly = matDB.mat_cng2tup_countonly
+    
+    mat_tup2lem_countonly = matDB.mat_tup2lem_countonly
+    mat_tup2cng_countonly = matDB.mat_tup2cng_countonly
+    mat_tup2tup_countonly = matDB.mat_tup2tup_countonly
+
+    mat_lemCount_1D = matDB.mat_lemCount_1D
+    mat_cngCount_1D = matDB.mat_cngCount_1D
+    mat_tupCount_1D = matDB.mat_tupCount_1D
+
+    # TODO: Change to actual value
+    _cg_count = len(mat_cngCount_1D)
+    # _edge_vector_dim = 9*_cg_count**2 + 9 * _cg_count + 8
+    _edge_vector_dim = 4*_cg_count**2 + 9*_cg_count + 9
+    _full_cnglist = list(mat_cngCount_1D)
+    print(_cg_count)
 """
 ################################################################################################
 ######################  CREATING FEATURE MATRICES ##############################################
 ################################################################################################
 """
+def tryProb_catchZero(mat2D, mat1D, key1, key2):
+    try:
+        v = float(mat2D[key1][key2])/mat1D[key1];
+    except KeyError:
+        v = 0
+    return v
+def Get_Features(node1, node2):
+    feats = np.zeros((_edge_vector_dim, 1))
+    # print('For ', node1, node2)
+    
+
+    # Path Constraint - Length 1 - # 8
+    # tup2tup edge ignored
+    fIndex = 0
+    feats[fIndex] = tryProb_catchZero(mat_lem2lem_countonly, mat_lemCount_1D, node1.lemma, node2.lemma); fIndex += 1;
+    feats[fIndex] = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, node2.cng); fIndex += 1;
+    feats[fIndex] = tryProb_catchZero(mat_lem2tup_countonly, mat_lemCount_1D, node1.lemma, node2.tup); fIndex += 1;
+
+    feats[fIndex] = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, node1.cng, node2.lemma); fIndex += 1;
+    feats[fIndex] = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, node1.cng, node2.cng); fIndex += 1;
+    feats[fIndex] = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, node1.cng, node2.tup); fIndex += 1;
+
+    feats[fIndex] = tryProb_catchZero(mat_tup2lem_countonly, mat_tupCount_1D, node1.tup, node2.lemma); fIndex += 1;
+    feats[fIndex] = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, node2.cng); fIndex += 1;
+    feats[fIndex] = tryProb_catchZero(mat_tup2tup_countonly, mat_tupCount_1D, node1.tup, node2.tup); fIndex += 1;
+
+    # Path Constraint - Length 2 - # _cg_count
+
+    # LEMMA->CNG->LEMMA
+    for k in range(0, _cg_count):
+        cng_k = _full_cnglist[k]
+        # TODO: Some lemma's still missing
+        pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, cng_k)
+        pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, cng_k, node2.lemma)
+        feats[fIndex + k] = pleft * pright
+    fIndex += _cg_count
+
+    # LEMMA->CNG->CNG
+    for k in range(0, _cg_count):
+        cng_k = _full_cnglist[k]
+        pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, cng_k)
+        pright = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, cng_k, node2.cng)
+        feats[fIndex + k] = pleft * pright
+    fIndex += _cg_count
+
+    # LEMMA->CNG->TUP
+    for k in range(0, _cg_count):
+        cng_k = _full_cnglist[k]
+        # TODO: Some lemma's still missing
+        pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, cng_k)
+        pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, cng_k, node2.tup)
+        feats[fIndex + k] = pleft * pright
+    fIndex += _cg_count
+
+    # CNG->CNG->LEMMA
+    for k in range(0, _cg_count):
+        cng_k = _full_cnglist[k]
+        pleft = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, node1.cng, cng_k)
+        pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, cng_k, node2.lemma)
+        feats[fIndex + k] = pleft * pright
+    fIndex += _cg_count
+
+    # CNG->CNG->CNG
+    for k in range(0, _cg_count):
+        cng_k = _full_cnglist[k]
+        pleft = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, node1.cng, cng_k)
+        pright = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, cng_k, node2.cng)
+        feats[fIndex + k] = pleft * pright
+    fIndex += _cg_count
+
+    # CNG->CNG->TUP
+    for k in range(0, _cg_count):
+        cng_k = _full_cnglist[k]
+        pleft = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, node1.cng, cng_k)
+        pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, cng_k, node2.tup)
+        feats[fIndex + k] = pleft * pright
+    fIndex += _cg_count
+
+    # TUP->CNG->LEMMA :: TOO MANY ZEROS
+    for k in range(0, _cg_count):
+        cng_k = _full_cnglist[k]
+        # TODO: Some lemma's still missing
+        pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, cng_k)
+        pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, cng_k, node2.lemma)
+        feats[fIndex + k] = pleft * pright
+    fIndex += _cg_count
+
+    # TUP->CNG->CNG :: TOO MANY ZEROS
+    for k in range(0, _cg_count):
+        cng_k = _full_cnglist[k]
+        # TODO: Some lemma's still missing
+        pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, cng_k)
+        pright = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, cng_k, node2.cng)
+        feats[fIndex + k] = pleft * pright
+    fIndex += _cg_count
+
+    # TUP->CNG->TUP :: TOO MANY ZEROS
+    for k in range(0, _cg_count):
+        cng_k = _full_cnglist[k]
+        # TODO: Some lemma's still missing
+        pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, cng_k)
+        pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, cng_k, node2.tup)
+        feats[fIndex + k] = pleft * pright
+    fIndex += _cg_count
+
+    # Path Constraint - Length 3 - # _cg_count^2
+
+    # LEMMA->CGS->CGS->LEMMA
+    for k1 in range(0, _cg_count):
+        cng_k1 = _full_cnglist[k1]
+        pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, cng_k1)
+        for k2 in range(0, _cg_count): 
+            cng_k2 = _full_cnglist[k2]
+            # TODO: Some lemma's still missing
+            pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, cng_k1, cng_k2)
+            pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, cng_k2, node2.lemma)
+            feats[fIndex + k1*_cg_count + k2] = pleft  * pmid * pright
+    fIndex += _cg_count**2
+
+    # # LEMMA->CGS->CGS->CNG
+    # for k1 in range(0, _cg_count):
+    #     cng_k1 = _full_cnglist[k1]
+    #     pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, cng_k1)
+    #     for k2 in range(0, _cg_count): 
+    #         cng_k2 = _full_cnglist[k2]
+    #         # TODO: Some lemma's still missing
+    #         pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, cng_k1, cng_k2)
+    #         pright = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, cng_k2, node2.cng)
+    #         feats[fIndex + k1*_cg_count + k2] = pleft  * pmid * pright
+    # fIndex += _cg_count**2
+
+    # LEMMA->CGS->CGS->TUP
+    for k1 in range(0, _cg_count):
+        cng_k1 = _full_cnglist[k1]
+        pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, cng_k1)
+        for k2 in range(0, _cg_count): 
+            cng_k2 = _full_cnglist[k2]
+            # TODO: Some lemma's still missing
+            pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, cng_k1, cng_k2)
+            pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, cng_k2, node2.tup)
+            feats[fIndex + k1*_cg_count + k2] = pleft  * pmid * pright
+    fIndex += _cg_count**2
+
+    # # CNG->CGS->CGS->LEMMA
+    # for k1 in range(0, _cg_count):
+    #     cng_k1 = _full_cnglist[k1]
+    #     pleft = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, node1.cng, cng_k1)
+    #     for k2 in range(0, _cg_count): 
+    #         cng_k2 = _full_cnglist[k2]
+    #         # TODO: Some lemma's still missing
+    #         pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, cng_k1, cng_k2)
+    #         pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, cng_k2, node2.lemma)
+    #         feats[fIndex + k1*_cg_count + k2] = pleft  * pmid * pright
+    # fIndex += _cg_count**2
+
+    # # CNG->CGS->CGS->CNG
+    # for k1 in range(0, _cg_count):
+    #     cng_k1 = _full_cnglist[k1]
+    #     pleft = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, node1.cng, cng_k1)
+    #     for k2 in range(0, _cg_count): 
+    #         cng_k2 = _full_cnglist[k2]
+    #         # TODO: Some lemma's still missing
+    #         pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, cng_k1, cng_k2)
+    #         pright = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, cng_k2, node2.cng)
+    #         feats[fIndex + k1*_cg_count + k2] = pleft  * pmid * pright
+    # fIndex += _cg_count**2
+
+    # # CNG->CGS->CGS->TUP
+    # for k1 in range(0, _cg_count):
+    #     cng_k1 = _full_cnglist[k1]
+    #     pleft = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, node1.cng, cng_k1)
+    #     for k2 in range(0, _cg_count): 
+    #         cng_k2 = _full_cnglist[k2]
+    #         # TODO: Some lemma's still missing
+    #         pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, cng_k1, cng_k2)
+    #         pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, cng_k2, node2.tup)
+    #         feats[fIndex + k1*_cg_count + k2] = pleft  * pmid * pright
+    # fIndex += _cg_count**2
+
+    # TUP->CGS->CGS->LEM
+    for k1 in range(0, _cg_count):
+        cng_k1 = _full_cnglist[k1]
+        pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, cng_k1)
+        for k2 in range(0, _cg_count): 
+            cng_k2 = _full_cnglist[k2]
+            # TODO: Some lemma's still missing
+            pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, cng_k1, cng_k2)
+            pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, cng_k2, node2.lemma)
+            feats[fIndex + k1*_cg_count + k2] = pleft  * pmid * pright
+    fIndex += _cg_count**2
+
+    # # TUP->CGS->CGS->CNG
+    # for k1 in range(0, _cg_count):
+    #     cng_k1 = _full_cnglist[k1]
+    #     pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, cng_k1)
+    #     for k2 in range(0, _cg_count): 
+    #         cng_k2 = _full_cnglist[k2]
+    #         # TODO: Some lemma's still missing
+    #         pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, cng_k1, cng_k2)
+    #         pright = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, cng_k2, node2.cng)
+    #         feats[fIndex + k1*_cg_count + k2] = pleft  * pmid * pright
+    # fIndex += _cg_count**2
+
+    # TUP->CGS->CGS->TUP
+    for k1 in range(0, _cg_count):
+        cng_k1 = _full_cnglist[k1]
+        pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, cng_k1)
+        for k2 in range(0, _cg_count): 
+            cng_k2 = _full_cnglist[k2]
+            # TODO: Some lemma's still missing
+            pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, cng_k1, cng_k2)
+            pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, cng_k2, node2.tup)
+            feats[fIndex + k1*_cg_count + k2] = pleft  * pmid * pright
+    fIndex += _cg_count**2
+
+
+    return feats
 def Get_Feat_Vec_Matrix(nodelist_new, conflicts_Dict):
     nodesCount = len(nodelist_new)
     featVMat = [[None for _ in range(nodesCount)] for _ in range(nodesCount)]
@@ -131,23 +389,7 @@ def Get_Feat_Vec_Matrix(nodelist_new, conflicts_Dict):
                 # featVMat[i][j][:] = 1e-35
                 pass
             else:
-                wd1 = nodelist_new[i]
-                wd2 = nodelist_new[j]
-                featVMat[i][j] = np.zeros((_edge_vector_dim, 1))
-                # print('For ', wd1, wd2)
-                for k in range(_edge_vector_dim):
-                    cng_k = _full_cnglist[k]
-                    # TODO: Some lemma's still missing
-                    try:
-                        pleft = float(mat_lem2cng_countonly[wd1.lemma][cng_k]) / mat_lem2cng_1D[wd1.lemma]
-                    except KeyError:
-                        pleft = 0
-                    try:
-                        pright = float(mat_cng2lem_countonly[cng_k][wd2.lemma]) / mat_cng2lem_1D[cng_k]
-                    except KeyError:
-                        pright = 0
-                        
-                    featVMat[i][j][k] = pleft * pright                
+                featVMat[i][j] = Get_Features(nodelist_new[i], nodelist_new[j])
     return featVMat
 
 # This function will be some neural network or a linear function or something of sorts
