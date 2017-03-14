@@ -10,14 +10,14 @@ Created on Tue Apr  5 19:14:27 2016
 def rom_slp(a):
         
     double_dict={}
-    f=open('rom2.txt','r')
+    f=open('rom2.txt','r', encoding = u'utf8')
     for lines in f.readlines():
             words=lines.split(',')
             words[1]=words[1].replace('\n','')
             double_dict[words[0]]=words[1]
     f.close()
     single_dict={}
-    q=open('rom.txt','r')
+    q=open('rom.txt','r', encoding = u'utf8')
     for lines in q.readlines():
             words=lines.split(',')
             words[1]=words[1].replace('\n','')

@@ -46,9 +46,12 @@ class NN:
         self.d = input_dimension
         # rand_init_range = np.sqrt(6.0/(self.n+self.d))
         # print(rand_init_range)
-        rand_init_range = 1e-3
+        
+        rand_init_range = 1e2
         self.W = np.random.uniform(-rand_init_range, rand_init_range, (self.n, self.d))
         # rand_init_range = np.sqrt(6.0/(self.n))
+
+        rand_init_range = 1e2
         self.U = np.random.uniform(-rand_init_range, rand_init_range, (self.n, 1))
 
     def Forward_Prop(self, x):
@@ -58,24 +61,37 @@ class NN:
         s = sigmoid(o)
         return (z2, a2, s)
     
-    def Back_Prop(self, dLdS, nodeLen, featVMat):
+    # Back_Propagate gradient of Loss, L:  Assuming S is the direct output of the network
+    def Back_Prop(self, dLdOut, nodeLen, featVMat):
         N = nodeLen
         dLdU = np.zeros(self.U.shape)
         dLdW = np.zeros(self.W.shape)
-        eta = 1000
-        _actual_sample_count = 0
+        etaW = 5e6
+        etaU = 5e3
         for i in range(N):
             for j in range(N):
-                if dLdS[i, j] != 0:
-                    _actual_sample_count += 1
-                    (z2, a2, s) = self.Forward_Prop(featVMat[i][j])                
-                    dLdU += dLdS[i, j]*a2*d_sigmoid(s)
+                if dLdOut[i, j] != 0 and (featVMat[i][j] is not None):
+                    (z2, a2, s) = self.Forward_Prop(featVMat[i][j])
+                    # print('O: ')
+                    # print(np.matmul(self.U.transpose(), a2))
+                    # print('S: ')
+                    # print(s)
+                    # print('Wx: ')
+                    # print(z2)
+                    # print('ds')
+                    # print(d_sigmoid(s))
+                    dLdU += dLdOut[i, j]*a2
                     dRelu = d_relu(z2)
                     for k in range(self.n):
-                        dLdW[k, :, None] += ((dLdS[i, j])*self.U[k]*dRelu[k]*d_sigmoid(s))*(featVMat[i][j])
+                        if dRelu[k] != 0:
+                            dLdW[k, :, None] += (dLdOut[i, j])*self.U[k]*dRelu[k]*(featVMat[i][j])
         
-        self.W -= eta*dLdW
-        self.U -= eta*dLdU
+        # print('dLdW: ')
+        # print(etaW*dLdW)
+        # print('dLdU: ')
+        # print(etaU*dLdU)
+        self.W -= etaW*dLdW/(N**2)
+        self.U -= etaU*dLdU/(N**2)
         
         
         
