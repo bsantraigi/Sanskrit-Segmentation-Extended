@@ -107,8 +107,8 @@ class NN:
             self.W -= etaW*dLdW/(batch_size)
             self.U -= etaU*dLdU/(batch_size)
         else:
-            etaW = 0.00001
-            etaU = 0.0000001
+            etaW = 0.0001
+            etaU = 0.00008
             batch_size = 0
             # print(dLdOut)
             for i in range(N):
@@ -133,8 +133,8 @@ class NN:
             if batch_size > 0:
                 # delW = etaW*dLdW/(batch_size)
                 # delU = etaU*dLdU/(batch_size)
-                delW = etaW*dLdW
-                delU = etaU*dLdU
+                delW = etaW*dLdW/(batch_size)
+                delU = etaU*dLdU/(batch_size)
                 print('Max(delW): %10.6f\tMax(delU): %10.6f'%(np.max(np.abs(delW)), np.max(np.abs(delU))))
                 self.W -= delW
                 self.U -= delU
