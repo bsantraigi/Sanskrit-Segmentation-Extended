@@ -107,8 +107,8 @@ class NN:
             self.W -= etaW*dLdW/(batch_size)
             self.U -= etaU*dLdU/(batch_size)
         else:
-            etaW = 0.0001
-            etaU = 0.00008
+            etaW = 0.00005
+            etaU = 0.00001
             batch_size = 0
             # print(dLdOut)
             for i in range(N):

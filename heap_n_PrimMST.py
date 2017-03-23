@@ -157,6 +157,7 @@ def MST(nodelist, WScalarMat, conflicts_Dict, source):
         mst_nodes[nextNode.chunk_id].append(nextNode)
         if nextNode.src != -1:
             mst_adj_graph[nextNode.src, nextNode.id] = True
+            mst_adj_graph[nextNode.id, nextNode.src] = True
         nid = nextNode.id
         for conId in conflicts_Dict[nid]:
             h.Delete(nodelist[conId])
