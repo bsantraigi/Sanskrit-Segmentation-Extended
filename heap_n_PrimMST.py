@@ -147,6 +147,7 @@ def MST(nodelist, WScalarMat, conflicts_Dict, source):
     h = Heap(nodelist)
     
     mst_nodes = defaultdict(lambda: [])
+    mst_nodes_bool = np.array([False]*len(nodelist))
     # Run MST only until first conflicting node is seen
     # Conflicting node will have np.inf as dist
     while True:
@@ -154,6 +155,7 @@ def MST(nodelist, WScalarMat, conflicts_Dict, source):
         if nextNode == None:
             break
         # print(nextNode.src, nextNode.id, nextNode)
+        mst_nodes_bool[nextNode.id] = True
         mst_nodes[nextNode.chunk_id].append(nextNode)
         if nextNode.src != -1:
             mst_adj_graph[nextNode.src, nextNode.id] = True
@@ -165,7 +167,8 @@ def MST(nodelist, WScalarMat, conflicts_Dict, source):
             if neighbour != nextNode.id:
                 h.Decrease_Key(nodelist[neighbour], WScalarMat[nextNode.id][neighbour], nextNode.id)
     mst_nodes = dict(mst_nodes)
-    return (mst_nodes, mst_adj_graph)
+
+    return (mst_nodes, mst_adj_graph, mst_nodes_bool)
 
 def GetMSTWeight(mst_nodes, _WScalarMat):
     sol_lemmas = []

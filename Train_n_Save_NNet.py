@@ -2,20 +2,27 @@
 IMPORTS
 """
 
+## bUILT-iN pACKAGES
 import pickle
+from collections import defaultdict
+import json
 import numpy as np
+import math
+import matplotlib.pyplot as plt
+np.set_printoptions(suppress=True)
+%matplotlib inline
+from IPython.display import display
+
+## lAST sUMMER
+from romtoslp import *
 from sentences import *
 from DCS import *
-from collections import defaultdict
-import math
 
-from romtoslp import *
-
+## tHIS sUMMER
 import MatDB
 import word_definite as WD
 from heap_n_PrimMST import *
 from nnet import *
-
 
 """
 ################################################################################################
@@ -58,12 +65,20 @@ def GetTrainingKit(sentenceObj, dcsObj):
     
 
 def GetGraph(nodelist, neuralnet):
-    conflicts_Dict = Get_Conflicts(nodelist)
+    if not neuralnet.outer_relu:
+        conflicts_Dict = Get_Conflicts(nodelist)
 
-    featVMat = Get_Feat_Vec_Matrix(nodelist, conflicts_Dict)
+        featVMat = Get_Feat_Vec_Matrix(nodelist, conflicts_Dict)
 
-    (WScalarMat, SigmoidGateOutput) = Get_W_Scalar_Matrix_from_FeatVect_Matrix(featVMat, nodelist, conflicts_Dict, neuralnet)
-    return (conflicts_Dict, featVMat, WScalarMat, SigmoidGateOutput)
+        (WScalarMat, SigmoidGateOutput) = Get_W_Scalar_Matrix_from_FeatVect_Matrix(featVMat, nodelist, conflicts_Dict, neuralnet)
+        return (conflicts_Dict, featVMat, WScalarMat, SigmoidGateOutput)
+    else:
+        conflicts_Dict = Get_Conflicts(nodelist)
+
+        featVMat = Get_Feat_Vec_Matrix(nodelist, conflicts_Dict)
+
+        WScalarMat = Get_W_Scalar_Matrix_from_FeatVect_Matrix(featVMat, nodelist, conflicts_Dict, neuralnet)
+        return (conflicts_Dict, featVMat, WScalarMat)
 
 # NEW LOSS FUNCTION
 def GetLoss(_mst_adj_graph, _mask_de_correct_edges, _negLogLikelies):
@@ -74,81 +89,114 @@ def GetLoss(_mst_adj_graph, _mask_de_correct_edges, _negLogLikelies):
 
 """
 ################################################################################################
+##############################  GET A FILENAME TO SAVE WEIGHTS  ################################
+################################################################################################
+"""
+import time
+st = str(int((time.time() * 1e6) % 1e13))
+log_name = 'logs/train_nnet_t{}.out'.format(st)
+p_name = 'outputs/train_nnet_t{}.p'.format(st)
+print('nEURAL nET wILL bE sAVED hERE: 'p_name)
+
+"""
+################################################################################################
 ##############################  MAIN FUNCTION  #################################################
 ################################################################################################
 """
-def main(loaded_SKT, loaded_DCS):
+trainingStatus = defaultdict(lambda: bool(False))
+"""
+################################################################################################
+##############################  MAIN FUNCTION  #################################################
+################################################################################################
+"""
+
+def train(loaded_SKT, loaded_DCS, n_trainset = -1):
     # Train
-    totalBatchToTrain = 50
-    filePerBatch = 15
-    iterationPerBatch = 5
-    _skt_file_list = list(loaded_SKT.keys())
+    filePerBatch = 20
+    iterationPerBatch = 10
+    if n_trainset == -1:
+        totalBatchToTrain = 20
+    else:
+        totalBatchToTrain = math.ceil(n_trainset/filePerBatch)
+    
     for iterout in range(totalBatchToTrain):
         # Change current batch
-        print('ITERATION OUT', iterout)
-        perm = np.random.permutation(len(loaded_SKT))[0:filePerBatch]
-        # print('Permutation: ', perm)
+        trainer.Save(p_name)
+        print('Batch: ', iterout)
+        files_for_batch = TrainFiles[iterout*filePerBatch:(iterout + 1)*filePerBatch]
+        print(files_for_batch)
         # trainer.Load('outputs/neuralnet_trained.p')
         
         # Run few times on same set of files
         for iterin in range(iterationPerBatch):
             print('ITERATION IN', iterin)        
-            for fn in perm:
-                sentenceObj = loaded_SKT[_skt_file_list[fn]]
-                dcsObj = loaded_DCS[_skt_file_list[fn]]
+            for fn in files_for_batch:
+                sentenceObj = loaded_SKT[fn]
+                dcsObj = loaded_DCS[fn]
+                if trainingStatus[sentenceObj.sent_id]:
+                    continue
                 # trainer.Save('outputs/saved_trainer.p')
                 try:
                     trainer.Train(sentenceObj, dcsObj)
-                except:
-                    pass
+                except (IndexError, KeyError) as e:
+                    print('\x1b[31mFailed: {} \x1b[0m'.format(sentenceObj.sent_id))
+    trainer.Save(p_name)
                 
-def test(loaded_SKT, loaded_DCS, perm = None, n_testSet = 10):
-    _skt_file_list = list(loaded_SKT.keys())
+def test(loaded_SKT, loaded_DCS, n_testSet = -1, _testFiles = None):
     total_lemma = 0;
     correct_lemma = 0;
 
     total_word = 0;
+    total_output_nodes = 0
     correct_word = 0;
     file_counter = 0
-    if perm is None:
-        n_testSet = min(n_testSet, len(_skt_file_list))
-        perm = np.random.permutation(len(_skt_file_list))[0:n_testSet]
-        # print('Permutation: ', perm)
-        for fn in perm:
-            if file_counter % 50 == 0:
-                print('Checkpoint: ', file_counter)
-            file_counter += 1
-            sentenceObj = loaded_SKT[_skt_file_list[fn]]
-            dcsObj = loaded_DCS[_skt_file_list[fn]]
-            try:
-                (word_match, lemma_match, n_dcsWords) = trainer.Test(sentenceObj, dcsObj)
-                total_word += n_dcsWords
-                correct_lemma += lemma_match
-                correct_word += word_match
-            except:
-                # print('Failed')
-                pass
+    if _testFiles is None:
+        if n_testSet == -1:
+            _testFiles = TestFiles
+        else:
+            _testFiles = TestFiles[0:n_testSet]
     else:
-        # print('Permutation: ', perm)
-        for fn in perm:
-            if file_counter % 50 == 0:
-                print('Checkpoint: ', file_counter)
-            file_counter += 1
-            sentenceObj = loaded_SKT[_skt_file_list[fn]]
-            dcsObj = loaded_DCS[_skt_file_list[fn]]
-            try:
-                (word_match, lemma_match, n_dcsWords) = trainer.Test(sentenceObj, dcsObj)
-                total_lemma += n_dcsWords
-                total_word += n_dcsWords
-                correct_lemma += lemma_match
-            except:
-                # print('Failed!')
-                pass
+        if n_testSet == -1:
+            _testFiles = _testFiles
+        else:
+            _testFiles = _testFiles[0:n_testSet]
             
+    recalls = []
+    recalls_of_word = []
+    precisions = []
+    precisions_of_words = []
+    for fn in _testFiles:
+        if file_counter % 100 == 0:
+            print(file_counter,' Checkpoint... ')
+        file_counter += 1
+        sentenceObj = loaded_SKT[fn]
+        dcsObj = loaded_DCS[fn]        
+        try:
+            (word_match, lemma_match, n_dcsWords, n_output_nodes) = trainer.Test(sentenceObj, dcsObj)
+            
+            recalls.append(lemma_match/n_dcsWords)
+            recalls_of_word.append(word_match/n_dcsWords)
+            
+            precisions.append(lemma_match/n_output_nodes)
+            precisions_of_words.append(word_match/n_output_nodes)
+            
+            total_lemma += n_dcsWords
+            total_word += n_dcsWords
+            
+            total_output_nodes += n_output_nodes            
+            
+            correct_lemma += lemma_match
             correct_word += word_match
-    print()
-    print('Micro Accuracy[lemma]: {}'.format(100*correct_lemma/total_word))
-    print('Micro Accuracy[word]: {}'.format(100*correct_word/total_word))
+        except (IndexError, KeyError) as e:
+            print('Failed!')        
+
+    print('Avg. Micro Recall of Lemmas: {}'.format(np.mean(np.array(recalls))))
+    print('Avg. Micro Recall of Words: {}'.format(np.mean(np.array(recalls_of_word))))
+    print('Avg. Micro Precision of Lemmas: {}'.format(np.mean(np.array(precisions))))
+    print('Avg. Micro Precision of Words: {}'.format(np.mean(np.array(precisions_of_words))))
+    
+    return (recalls, recalls_of_word, precisions, precisions_of_words)
+    
 
 """
 ################################################################################################
@@ -291,11 +339,19 @@ def InitModule(_matDB):
 ################################################################################################
 """
 if __name__ == '__main__':
-    matDB = MatDB.MatDB()
-    InitModule(matDB)
-
     loaded_SKT = pickle.load(open('../Simultaneous_CompatSKT_10K.p', 'rb'))
     loaded_DCS = pickle.load(open('../Simultaneous_DCS_10K.p', 'rb'))
+
+    dataset_4k_1k = pickle.load(open('../SmallDataset_4K_1K.p', 'rb'))
+    TrainFiles = dataset_4k_1k['TrainFiles']
+    TestFiles = dataset_4k_1k['TestFiles']
+
+    dataset_6k_3k = pickle.load(open('../SmallDataset_6K_3K.p', 'rb'))
+    TrainFiles_2 = dataset_6k_3k['TrainFiles']
+    TestFiles_2 = dataset_6k_3k['TestFiles']
+
+    matDB = MatDB.MatDB()
+    InitModule(matDB)
 
     print('PRE-TRAIN ACCURACIES:')
     test(loaded_SKT, loaded_DCS, n_testSet=1000)

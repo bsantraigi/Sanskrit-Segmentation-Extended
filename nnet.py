@@ -81,6 +81,7 @@ class NN:
             # s = relu(o)
             s = o
         else:
+            raise Exception('Support for Non-Outer_Relu removed')
             s = sigmoid(o)
         return (z2, a2, s)
     
@@ -90,24 +91,25 @@ class NN:
         dLdU = np.zeros(self.U.shape)
         dLdW = np.zeros(self.W.shape)
         if not self.outer_relu:
-            etaW = 5e6
-            etaU = 5e3
-            batch_size = 0
-            for i in range(N):
-                for j in range(N):
-                    if dLdOut[i, j] != 0 and (featVMat[i][j] is not None):
-                        batch_size += 1
-                        (z2, a2, s) = self.Forward_Prop(featVMat[i][j])
-                        dLdU += dLdOut[i, j]*a2
-                        dRelu = d_relu(z2)
-                        for k in range(self.n):
-                            if dRelu[k] != 0:
-                                dLdW[k, :, None] += (dLdOut[i, j])*self.U[k]*dRelu[k]*(featVMat[i][j])
+            raise Exception('Support for Non-Outer_Relu removed')
+            # etaW = 5e6
+            # etaU = 5e3
+            # batch_size = 0
+            # for i in range(N):
+            #     for j in range(N):
+            #         if dLdOut[i, j] != 0 and (featVMat[i][j] is not None):
+            #             batch_size += 1
+            #             (z2, a2, s) = self.Forward_Prop(featVMat[i][j])
+            #             dLdU += dLdOut[i, j]*a2
+            #             dRelu = d_relu(z2)
+            #             for k in range(self.n):
+            #                 if dRelu[k] != 0:
+            #                     dLdW[k, :, None] += (dLdOut[i, j])*self.U[k]*dRelu[k]*(featVMat[i][j])
             
-            self.W -= etaW*dLdW/(batch_size)
-            self.U -= etaU*dLdU/(batch_size)
+            # self.W -= etaW*dLdW/(batch_size)
+            # self.U -= etaU*dLdU/(batch_size)
         else:
-            etaW = 0.00005
+            etaW = 0.00003
             etaU = 0.00001
             batch_size = 0
             # print(dLdOut)
