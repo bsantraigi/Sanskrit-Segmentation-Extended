@@ -86,7 +86,7 @@ class NN:
         return (z2, a2, s)
     
     # Back_Propagate gradient of Loss, L:  Assuming S is the direct output of the network
-    def Back_Prop(self, dLdOut, nodeLen, featVMat):
+    def Back_Prop(self, dLdOut, nodeLen, featVMat, _debug = True):
         N = nodeLen
         dLdU = np.zeros(self.U.shape)
         dLdW = np.zeros(self.W.shape)
@@ -109,8 +109,8 @@ class NN:
             # self.W -= etaW*dLdW/(batch_size)
             # self.U -= etaU*dLdU/(batch_size)
         else:
-            etaW = 0.00003
-            etaU = 0.00001
+            etaW = 0.00001
+            etaU = 0.000003
             batch_size = 0
             # print(dLdOut)
             for i in range(N):
@@ -137,7 +137,8 @@ class NN:
                 # delU = etaU*dLdU/(batch_size)
                 delW = etaW*dLdW/(batch_size)
                 delU = etaU*dLdU/(batch_size)
-                print('Max(delW): %10.6f\tMax(delU): %10.6f'%(np.max(np.abs(delW)), np.max(np.abs(delU))))
+                if _debug:
+                    print('Max(delW): %10.6f\tMax(delU): %10.6f'%(np.max(np.abs(delW)), np.max(np.abs(delU))))
                 self.W -= delW
                 self.U -= delU
 

@@ -3,6 +3,7 @@ IMPORTS
 """
 
 ## bUILT-iN pACKAGES
+import sys
 import pickle
 from collections import defaultdict
 import json
@@ -10,7 +11,6 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 np.set_printoptions(suppress=True)
-%matplotlib inline
 from IPython.display import display
 
 ## lAST sUMMER
@@ -96,7 +96,7 @@ import time
 st = str(int((time.time() * 1e6) % 1e13))
 log_name = 'logs/train_nnet_t{}.out'.format(st)
 p_name = 'outputs/train_nnet_t{}.p'.format(st)
-print('nEURAL nET wILL bE sAVED hERE: 'p_name)
+print('nEURAL nET wILL bE sAVED hERE: ', p_name)
 
 """
 ################################################################################################
@@ -106,11 +106,11 @@ print('nEURAL nET wILL bE sAVED hERE: 'p_name)
 trainingStatus = defaultdict(lambda: bool(False))
 """
 ################################################################################################
-##############################  MAIN FUNCTION  #################################################
+##############################  TRAIN FUNCTION  ################################################
 ################################################################################################
 """
 
-def train(loaded_SKT, loaded_DCS, n_trainset = -1):
+def train(loaded_SKT, loaded_DCS, n_trainset = -1, _debug = True):
     # Train
     filePerBatch = 20
     iterationPerBatch = 10
@@ -137,10 +137,13 @@ def train(loaded_SKT, loaded_DCS, n_trainset = -1):
                     continue
                 # trainer.Save('outputs/saved_trainer.p')
                 try:
-                    trainer.Train(sentenceObj, dcsObj)
+                    trainer.Train(sentenceObj, dcsObj, _debug)
                 except (IndexError, KeyError) as e:
                     print('\x1b[31mFailed: {} \x1b[0m'.format(sentenceObj.sent_id))
+            sys.stdout.flush() # Flush IO buffer 
     trainer.Save(p_name)
+    
+    sys.stdout.flush() # Flush IO buffer
                 
 def test(loaded_SKT, loaded_DCS, n_testSet = -1, _testFiles = None):
     total_lemma = 0;
@@ -168,6 +171,7 @@ def test(loaded_SKT, loaded_DCS, n_testSet = -1, _testFiles = None):
     for fn in _testFiles:
         if file_counter % 100 == 0:
             print(file_counter,' Checkpoint... ')
+            sys.stdout.flush() # Flush IO buffer 
         file_counter += 1
         sentenceObj = loaded_SKT[fn]
         dcsObj = loaded_DCS[fn]        
@@ -198,6 +202,13 @@ def test(loaded_SKT, loaded_DCS, n_testSet = -1, _testFiles = None):
     return (recalls, recalls_of_word, precisions, precisions_of_words)
     
 
+# NEW FUNCTION
+def GetLoss(_mst_adj_graph, _mask_de_correct_edges, _WScalarMat):
+    _WScalarMat = _WScalarMat.copy()
+    _WScalarMat[_mst_adj_graph&(~_mask_de_correct_edges)] *= -1 # BAKA!!! Check before you try to fix this again
+    _WScalarMat[~_mst_adj_graph] = 0
+    return np.sum(_WScalarMat)
+
 """
 ################################################################################################
 #############################   TRAINER CLASS DEFINITION  ######################################
@@ -205,23 +216,32 @@ def test(loaded_SKT, loaded_DCS, n_testSet = -1, _testFiles = None):
 """
 class Trainer:
     def __init__(self):
+        self.hidden_layer_size = 300
         self._edge_vector_dim = WD._edge_vector_dim
         self._full_cnglist = list(WD.mat_cngCount_1D)
-        self.neuralnet = NN(self._edge_vector_dim, 200)
-        self.history = defaultdict(lambda: list())
+        self.neuralnet = NN(self._edge_vector_dim, self.hidden_layer_size, outer_relu=True)
+        # self.history = defaultdict(lambda: list())
         
     def Reset(self):
-        self.neuralnet = NN(self._edge_vector_dim, 200)
-        self.history = defaultdict(lambda: list())
+        self.neuralnet = NN(self._edge_vector_dim, self.hidden_layer_size)
+        # self.history = defaultdict(lambda: list())
         
     def Save(self, filename):
-        pickle.dump({'nnet': self.neuralnet, 'history': dict(self.history)}, open(filename, 'wb'))
+        print('Weights Saved: ', p_name)
+        pickle.dump({
+                'U': self.neuralnet.U,
+                'W': self.neuralnet.W,
+                'n': self.neuralnet.n,
+                'd': self.neuralnet.d
+            }, open(p_name, 'wb'))
+        #pickle.dump({'nnet': self.neuralnet, 'history': dict(self.history)}, open(filename, 'wb'))
+        return
         
     
     def Load(self, filename):
-        o = pickle.load(open(filename, 'rb'))
-        self.neuralnet = o['nnet']
-        self.history = defaultdict(lambda: list(), o['history'])    
+        loader = pickle.load(open(filename, 'rb'))
+        self.neuralnet.U = loader['U']
+        self.neuralnet.W = loader['W']
         
     def Test(self, sentenceObj, dcsObj):
         neuralnet = self.neuralnet
@@ -231,7 +251,7 @@ class Trainer:
             (nodelist, nodelist_correct, _) = GetTrainingKit(sentenceObj, dcsObj)
             # nodelist = GetNodes(sentenceObj)
         except IndexError:
-            # print('\x1b[31mError with {} \x1b[0m'.format(sentenceObj.sent_id))
+            print('\x1b[31mError with {} \x1b[0m'.format(sentenceObj.sent_id))
             return (0, 0, 0)
             
         conflicts_Dict = Get_Conflicts(nodelist)
@@ -240,11 +260,14 @@ class Trainer:
         featVMat = Get_Feat_Vec_Matrix(nodelist, conflicts_Dict)
         featVMat_correct = Get_Feat_Vec_Matrix(nodelist_correct, conflicts_Dict_correct)
         
-        (WScalarMat, SigmoidGateOutput) = Get_W_Scalar_Matrix_from_FeatVect_Matrix(featVMat, nodelist, conflicts_Dict, neuralnet)
+        if not self.neuralnet.outer_relu:
+            (WScalarMat, SigmoidGateOutput) = Get_W_Scalar_Matrix_from_FeatVect_Matrix(featVMat, nodelist, conflicts_Dict, neuralnet)
+        else:
+            WScalarMat = Get_W_Scalar_Matrix_from_FeatVect_Matrix(featVMat, nodelist, conflicts_Dict, neuralnet)
         # print(WScalarMat)
         # Get all MST
         for source in range(len(nodelist)):
-            (mst_nodes, mst_adj_graph) = MST(nodelist, WScalarMat, conflicts_Dict, source)
+            (mst_nodes, mst_adj_graph, _) = MST(nodelist, WScalarMat, conflicts_Dict, source)
             # print('.', end = '')
             score = GetMSTWeight(mst_nodes, WScalarMat)
             if(score < minScore):
@@ -253,8 +276,10 @@ class Trainer:
         dcsLemmas = [[rom_slp(l) for l in arr]for arr in dcsObj.lemmas]
         word_match = 0
         lemma_match = 0
-        for chunk_id, wdSplit in mst_nodes.items():
+        n_output_nodes = 0
+        for chunk_id, wdSplit in minMst.items():
             for wd in wdSplit:
+                n_output_nodes += 1
                 # Match lemma
                 search_result = [i for i, j in enumerate(dcsLemmas[chunk_id]) if j == wd.lemma]
                 if len(search_result) > 0:
@@ -266,11 +291,15 @@ class Trainer:
                         # print(wd.lemma, wd.cng)
                         break
         dcsLemmas = [l for arr in dcsObj.lemmas for l in arr]
-        # print('\nFull Match: {}, Partial Match: {}, OutOf {}, NodeCount: {}, '.\
-        #       format(word_match, lemma_match, len(dcsLemmas), len(nodelist)))
-        return (word_match, lemma_match, len(dcsLemmas))
+#         print('\nFull Match: {}, Partial Match: {}, OutOf {}, NodeCount: {}, '.\
+#               format(word_match, lemma_match, len(dcsLemmas), len(nodelist)))
+        return (word_match, lemma_match, len(dcsLemmas), n_output_nodes)
     
-    def Train(self, sentenceObj, dcsObj):
+    def Train(self, sentenceObj, dcsObj, _debug = True):
+        # Hyperparameter for hinge loss: m
+        M_hinge = 14
+        
+        """ Pre-Process DCS and SKT to get all Nodes etc. """
         try:
             (nodelist, nodelist_correct, nodelist_to_correct_mapping) = GetTrainingKit(sentenceObj, dcsObj)
         except IndexError as e:
@@ -278,54 +307,83 @@ class Trainer:
             # print(e)
             return
         
-        """ CREATE A MASK FOR ALL EDGES BETWEEN CORRECT NODE PAIRS"""
-        mask_de_correct_edges = np.ndarray((len(nodelist), len(nodelist)), np.bool)*False
-        for n1 in nodelist_to_correct_mapping.values():
-            for n2 in nodelist_to_correct_mapping.values():
-                if n1 != n2:
-                    mask_de_correct_edges[n1, n2] = 1
-                    mask_de_correct_edges[n2, n1] = 1
-                
-        
-        """ FOR MST OF GRAPH WITH ONLY CORRECT SET OF NODES """
-        (conflicts_Dict_correct, featVMat_correct, WScalarMat_correct, _) = GetGraph(nodelist_correct, self.neuralnet)
+        """ FORM MAXIMUM(ENERGY) SPANNING TREE OF THE GOLDEN GRAPH : WORST GOLD STRUCTURE """
+        if not self.neuralnet.outer_relu:
+            raise Exception('Support for Non-outer-relu removed')
+        else:
+            (conflicts_Dict_correct, featVMat_correct, WScalarMat_correct) = GetGraph(nodelist_correct, self.neuralnet)
         source = 0
-        (mst_nodes_correct, mst_adj_graph_correct_0) = MST(nodelist_correct, WScalarMat_correct, conflicts_Dict_correct, source)
-        W_star = GetMSTWeight(mst_nodes_correct, WScalarMat_correct) # Total weight of correct MST
+        
+        """ Find the max spanning tree : negative Weight matrix passed """
+        (max_st_gold_ndict, max_st_adj_gold_small, _) = MST(nodelist_correct, -WScalarMat_correct, conflicts_Dict_correct, source)
+        energy_gold_max_ST = np.sum(WScalarMat_correct[max_st_adj_gold_small])
+        
+        """ Convert correct spanning tree graph adj matrix to full marix dimensions """
+        """ Create full-size adjacency matrix for correct_mst_small """
+        nodelen = len(nodelist)
+        max_st_adj_gold = np.ndarray((nodelen, nodelen), np.bool)*False # T_STAR
+        for i in range(max_st_adj_gold_small.shape[0]):
+            for j in range(max_st_adj_gold_small.shape[1]):
+                max_st_adj_gold[nodelist_to_correct_mapping[i], nodelist_to_correct_mapping[j]] = max_st_adj_gold_small[i, j]
+        
+        """ Delta(Margin) Function : MASK FOR WHICH NODES IN NODELIST BELONG TO DCS """
+        gold_nodes_mask = np.array([False]*len(nodelist))
+        for i in range(len(nodelist_correct)):
+            gold_nodes_mask[nodelist_to_correct_mapping[nodelist_correct[i].id]] = True
+        margin_f = lambda nodes_mask: np.sum(nodes_mask&gold_nodes_mask)**1.7
         
         """ FOR ALL POSSIBLE MST FROM THE COMPLETE GRAPH """
-        (conflicts_Dict, featVMat, WScalarMat, SigmoidGateOutput) = GetGraph(nodelist, self.neuralnet)
-        Total_Loss = 0
-
-        # Convert correct spanning tree graph adj matrix to actual marix dimensions
-        # Create full-size adjacency matrix for correct_mst
-        nodelen = len(nodelist)
-        mst_adj_graph_correct = np.ndarray((nodelen, nodelen), np.bool)*False
-        for i in range(mst_adj_graph_correct_0.shape[0]):
-            for j in range(mst_adj_graph_correct_0.shape[1]):
-                mst_adj_graph_correct[nodelist_to_correct_mapping[i], nodelist_to_correct_mapping[j]] = \
-                mst_adj_graph_correct_0[i, j]
+        if not self.neuralnet.outer_relu:
+            raise Exception('Support for Non-outer-relu removed')
+        else:
+            (conflicts_Dict, featVMat, WScalarMat) = GetGraph(nodelist, self.neuralnet)
 
         """ For each node - Find MST with that source"""
-        dLdOut = np.zeros(WScalarMat.shape)
+        min_STx = None # Min Energy spanning tree with worst margin with gold_STx
+        min_marginalized_energy = np.inf
+        
         for source in range(len(nodelist)):
-            (mst_nodes, mst_adj_graph) = MST(nodelist, WScalarMat, conflicts_Dict, source)
+            (mst_nodes, mst_adj_graph, mst_nodes_bool) = MST(nodelist, WScalarMat, conflicts_Dict, source) # T_X
             # print('.', end = '')
+           
+            marginalized_dist = np.sum(WScalarMat[mst_adj_graph]) - margin_f(mst_nodes_bool)
+            if marginalized_dist < min_marginalized_energy:
+                min_marginalized_energy = marginalized_dist
+                min_STx = mst_adj_graph
+            # Energy diff should all be negative
+#             print('Source: [{}], Del:{}, Energy_margin: {:.3f}, Energy: {:.3f}, GE:{:.3f}'.\
+#                   format(source, margin_f(mst_nodes_bool), marginalized_dist,  np.sum(WScalarMat[mst_adj_graph]), energy_gold_max_ST))
 
-            """ Gradient Descent"""
-            Total_Loss += GetLoss(mst_adj_graph, mask_de_correct_edges, WScalarMat)
+        """ Gradient Descent """
+        # FOR MOST OFFENdING Y
+        doBpp = False
+        
+        Total_Loss = energy_gold_max_ST - min_marginalized_energy
+#         print('Total Loss: ', Total_Loss)
+        if Total_Loss > 0:
+            doBpp = True
+            dLdOut = np.zeros_like(WScalarMat)
             
-            # For new loss function
-            dLdOut_inner = (1 - SigmoidGateOutput)
-            dLdOut_inner[~mst_adj_graph] = 0 # Edges not in the current tree
-            dLdOut_inner[mst_adj_graph^mask_de_correct_edges] = -dLdOut_inner[mst_adj_graph^mask_de_correct_edges]
-            
-            dLdOut += dLdOut_inner
-        self.neuralnet.Back_Prop(dLdOut/len(nodelist), len(nodelist), featVMat)        
+            if not self.neuralnet.outer_relu:
+                # For new loss function with sigmoid on neuralnet
+                raise Exception('Support for relu has been removed')
+            else:
+                # For new loss function with ReLU on neuralnet
+                dLdOut[max_st_adj_gold] = 1
+                dLdOut[min_STx] = -1
+
+        if doBpp:
+            if _debug:
+                print('{}. '.format(sentenceObj.sent_id), end = '')
+            self.neuralnet.Back_Prop(dLdOut, len(nodelist), featVMat, _debug)
+        else:
+            trainingStatus[sentenceObj.sent_id] = True # Means tranining done on this file
+            #print('Don\'t do BPP')
+            pass
+        
         Total_Loss /= len(nodelist)
-        self.history[sentenceObj.sent_id].append(Total_Loss)
-        # print("\nFileKey: %s, Loss: %6.3f, Original MSTScore: %6.3f" % (sentenceObj.sent_id, Total_Loss, W_star))
-
+        # self.history[sentenceObj.sent_id].append(Total_Loss)
+#         print("\nFileKey: %s, Loss: %6.3f, Loss2: %6.3f" % (sentenceObj.sent_id, Total_Loss, Loss_2))
 
 trainer = None
 def InitModule(_matDB):
@@ -354,17 +412,20 @@ if __name__ == '__main__':
     InitModule(matDB)
 
     print('PRE-TRAIN ACCURACIES:')
-    test(loaded_SKT, loaded_DCS, n_testSet=1000)
+    _recalls, _recalls_of_word, _precisions, _precisions_of_words =\
+     test(loaded_SKT, loaded_DCS, n_testSet = 1000, _testFiles = TestFiles)
 
     print('TRAINING ROUND 1::')
-    main(loaded_SKT, loaded_DCS)
+    train(loaded_SKT, loaded_DCS, 1000, _debug = False)
 
     print('POST-TRAIN ACCURACIES:')
-    test(loaded_SKT, loaded_DCS, n_testSet=1000)
+    _recalls, _recalls_of_word, _precisions, _precisions_of_words =\
+     test(loaded_SKT, loaded_DCS, n_testSet = 1000, _testFiles = TestFiles)
 
     print('TRAINING ROUND 2::')
-    main(loaded_SKT, loaded_DCS)
+    train(loaded_SKT, loaded_DCS, 1000, _debug = False)
 
     print('POST-TRAIN2 ACCURACIES:')
-    test(loaded_SKT, loaded_DCS, n_testSet=1000)
+    _recalls, _recalls_of_word, _precisions, _precisions_of_words =\
+     test(loaded_SKT, loaded_DCS, n_testSet = 1000, _testFiles = TestFiles_2)
     # print ("Not Implemented")
