@@ -109,68 +109,64 @@ def Get_Conflicts(nodelist_new):
 ##################### LOAD PROBABILITY MATRICES  ## LEMMA, CNG, CNG_GROUP # ####################
 ##############################  TUPLES ALSO  ###################################################
 """
-mat_lem2lem_countonly = None
-mat_lem2cng_countonly = None
-mat_lem2tup_countonly = None
+prob_lem2lem_linear = None
+prob_lem2cng_linear = None
+prob_lem2tup_linear = None
 
-mat_cng2lem_countonly = None
-mat_cng2cng_countonly = None
-mat_cng2tup_countonly = None
+prob_cng2lem_linear = None
+prob_cng2cng_linear = None
+prob_cng2tup_linear = None
 
-mat_tup2lem_countonly = None
-mat_tup2cng_countonly = None
-mat_tup2tup_countonly = None
-
-mat_lemCount_1D = None
-mat_cngCount_1D = None
-mat_tupCount_1D = None
+prob_tup2lem_linear = None
+prob_tup2cng_linear = None
+prob_tup2tup_linear = None
 
 _cg_count = None
 _edge_vector_dim = None
 _full_cnglist = None
 
 def word_definite_extInit(matDB):
-    global mat_lem2lem_countonly, mat_lem2cng_countonly, mat_lem2tup_countonly, \
-     mat_cng2lem_countonly, mat_cng2cng_countonly, mat_cng2tup_countonly, \
-     mat_tup2lem_countonly, mat_tup2cng_countonly, mat_tup2tup_countonly, \
+    global prob_lem2lem_linear, prob_lem2cng_linear, prob_lem2tup_linear, \
+     prob_cng2lem_linear, prob_cng2cng_linear, prob_cng2tup_linear, \
+     prob_tup2lem_linear, prob_tup2cng_linear, prob_tup2tup_linear, \
      mat_lemCount_1D, mat_cngCount_1D, mat_tupCount_1D, \
      _cg_count, _full_cnglist, _edge_vector_dim
 
-    mat_lem2lem_countonly = matDB.mat_lem2lem_countonly
-    mat_lem2cng_countonly = matDB.mat_lem2cng_countonly
-    mat_lem2tup_countonly = matDB.mat_lem2tup_countonly
+    prob_lem2lem_linear = matDB.prob_lem2lem_linear
+    prob_lem2cng_linear = matDB.prob_lem2cng_linear
+    prob_lem2tup_linear = matDB.prob_lem2tup_linear
 
-    mat_cng2lem_countonly = matDB.mat_cng2lem_countonly
-    mat_cng2cng_countonly = matDB.mat_cng2cng_countonly
-    mat_cng2tup_countonly = matDB.mat_cng2tup_countonly
+    prob_cng2lem_linear = matDB.prob_cng2lem_linear
+    prob_cng2cng_linear = matDB.prob_cng2cng_linear
+    prob_cng2tup_linear = matDB.prob_cng2tup_linear
     
-    mat_tup2lem_countonly = matDB.mat_tup2lem_countonly
-    mat_tup2cng_countonly = matDB.mat_tup2cng_countonly
-    mat_tup2tup_countonly = matDB.mat_tup2tup_countonly
-
-    mat_lemCount_1D = matDB.mat_lemCount_1D
-    mat_cngCount_1D = matDB.mat_cngCount_1D
-    mat_tupCount_1D = matDB.mat_tupCount_1D
+    prob_tup2lem_linear = matDB.prob_tup2lem_linear
+    prob_tup2cng_linear = matDB.prob_tup2cng_linear
+    prob_tup2tup_linear = matDB.prob_tup2tup_linear
 
     # TODO: Change to actual value
-    _cg_count = len(mat_cngCount_1D)
+    # _cg_count = len(mat_cngCount_1D)
     # _edge_vector_dim = 9*_cg_count**2 + 9 * _cg_count + 8
     # _edge_vector_dim = 4*_cg_count**2 + 9*_cg_count + 9
     _edge_vector_dim = 1000
-    _full_cnglist = list(mat_cngCount_1D)
-    print(_cg_count)
+    # _full_cnglist = list(mat_cngCount_1D)
+    # print(_cg_count)
 
 """
 ################################################################################################
 ######################  CREATING FEATURE MATRICES ##############################################
 ################################################################################################
 """
-def tryProb_catchZero(mat2D, mat1D, key1, key2):
-    try:
-        v = float(mat2D[key1][key2])/mat1D[key1];
-    except KeyError:
-        v = 0
-    return v
+def tryProb_catchZero(mat2D, key1):
+    # try:
+    #     v = float(mat2D[key1][key2])/mat1D[key1];
+    # except KeyError:
+    #     v = 0
+
+    if key1 in mat2D:
+        return mat2D[key1]
+
+    return 0
 '''
 def Get_Features(node1, node2):
     feats = np.zeros((_edge_vector_dim, 1))
@@ -441,5982 +437,3004 @@ def Get_Features(node1, node2):
     fIndex = 0
     
     # L->dat. du.->L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pright; fIndex += 1
+    feats[0] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' +  node2.lemma);
             
     # L->-90->L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-90')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-90', node2.lemma)
-    feats[fIndex] = pleft * pright; fIndex += 1
+    feats[1] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-90') * tryProb_catchZero(prob_cng2lem_linear, '-90^' +  node2.lemma);
             
     # L->-57->L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-57')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-57', node2.lemma)
-    feats[fIndex] = pleft * pright; fIndex += 1
+    feats[2] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-57') * tryProb_catchZero(prob_cng2lem_linear, '-57^' +  node2.lemma);
             
     # L->8_fp->L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pright; fIndex += 1
+    feats[3] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' +  node2.lemma);
             
     # L->169->L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '169')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '169', node2.lemma)
-    feats[fIndex] = pleft * pright; fIndex += 1
+    feats[4] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^169') * tryProb_catchZero(prob_cng2lem_linear, '169^' +  node2.lemma);
             
     # L->54->L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pright; fIndex += 1
+    feats[5] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' +  node2.lemma);
             
     # L->153->L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pright; fIndex += 1
+    feats[6] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' +  node2.lemma);
             
     # L->-24->L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pright; fIndex += 1
+    feats[7] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' +  node2.lemma);
             
     # L->137->L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pright; fIndex += 1
+    feats[8] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' +  node2.lemma);
             
     # L->-112->L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pright; fIndex += 1
+    feats[9] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' +  node2.lemma);
             
     # L->101->L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pright; fIndex += 1
+    feats[10] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' +  node2.lemma);
             
     # L->91->L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pright; fIndex += 1
+    feats[11] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' +  node2.lemma);
             
     # L->3_du->L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pright; fIndex += 1
+    feats[12] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' +  node2.lemma);
             
     # L->91->T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '91')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '91', node2.tup)
-    feats[fIndex] = pleft * pright; fIndex += 1
+    feats[13] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^91') * tryProb_catchZero(prob_cng2tup_linear, '91^' +  node2.tup);
             
     # C->3_du->T
-    pleft = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, node1.cng, '3_du')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '3_du', node2.tup)
-    feats[fIndex] = pleft * pright; fIndex += 1
+    feats[14] = tryProb_catchZero(prob_cng2cng_linear, node1.cng + '^3_du') * tryProb_catchZero(prob_cng2tup_linear, '3_du^' +  node2.tup);
             
     # T->8_fp->L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pright; fIndex += 1
+    feats[15] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' +  node2.lemma);
             
     # T->54->L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pright; fIndex += 1
+    feats[16] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' +  node2.lemma);
             
     # T->153->L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pright; fIndex += 1
+    feats[17] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' +  node2.lemma);
             
     # T->137->L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pright; fIndex += 1
+    feats[18] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' +  node2.lemma);
             
     # T->-112->L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pright; fIndex += 1
+    feats[19] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' +  node2.lemma);
             
     # T->101->L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pright; fIndex += 1
+    feats[20] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' +  node2.lemma);
             
     # T->91->L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pright; fIndex += 1
+    feats[21] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' +  node2.lemma);
             
     # L -> 2_sp -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '2_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '2_sp', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[22] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^2_sp') * tryProb_catchZero(prob_cng2cng_linear, '2_sp^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 2_sp -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '2_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '2_sp', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[23] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^2_sp') * tryProb_catchZero(prob_cng2cng_linear, '2_sp^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 2_sp -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '2_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '2_sp', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[24] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^2_sp') * tryProb_catchZero(prob_cng2cng_linear, '2_sp^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 2_sp -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '2_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '2_sp', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[25] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^2_sp') * tryProb_catchZero(prob_cng2cng_linear, '2_sp^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> 2_sp -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '2_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '2_sp', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[26] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^2_sp') * tryProb_catchZero(prob_cng2cng_linear, '2_sp^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> 2_sp -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '2_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '2_sp', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[27] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^2_sp') * tryProb_catchZero(prob_cng2cng_linear, '2_sp^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 2_sp -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '2_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '2_sp', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[28] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^2_sp') * tryProb_catchZero(prob_cng2cng_linear, '2_sp^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 2_sp -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '2_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '2_sp', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[29] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^2_sp') * tryProb_catchZero(prob_cng2cng_linear, '2_sp^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 5_du -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_du', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[30] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_du') * tryProb_catchZero(prob_cng2cng_linear, '5_du^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 5_du -> -57 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_du', '-57')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-57', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[31] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_du') * tryProb_catchZero(prob_cng2cng_linear, '5_du^-57') * tryProb_catchZero(prob_cng2lem_linear, '-57^' + node2.lemma);
     
     # L -> 5_du -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_du', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[32] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_du') * tryProb_catchZero(prob_cng2cng_linear, '5_du^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 5_du -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_du', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[33] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_du') * tryProb_catchZero(prob_cng2cng_linear, '5_du^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 5_du -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_du', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[34] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_du') * tryProb_catchZero(prob_cng2cng_linear, '5_du^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> 5_du -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_du', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[35] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_du') * tryProb_catchZero(prob_cng2cng_linear, '5_du^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> 5_du -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_du', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[36] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_du') * tryProb_catchZero(prob_cng2cng_linear, '5_du^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> 5_du -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_du', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[37] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_du') * tryProb_catchZero(prob_cng2cng_linear, '5_du^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> 5_du -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_du', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[38] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_du') * tryProb_catchZero(prob_cng2cng_linear, '5_du^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 5_du -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_du', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[39] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_du') * tryProb_catchZero(prob_cng2cng_linear, '5_du^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> 5_du -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_du', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[40] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_du') * tryProb_catchZero(prob_cng2cng_linear, '5_du^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 5_du -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_du', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[41] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_du') * tryProb_catchZero(prob_cng2cng_linear, '5_du^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> 5_du -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_du', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[42] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_du') * tryProb_catchZero(prob_cng2cng_linear, '5_du^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> 5_du -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_du', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[43] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_du') * tryProb_catchZero(prob_cng2cng_linear, '5_du^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> gen. sg. -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'gen. sg.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'gen. sg.', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[44] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^gen. sg.') * tryProb_catchZero(prob_cng2cng_linear, 'gen. sg.^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> gen. sg. -> -90 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'gen. sg.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'gen. sg.', '-90')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-90', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[45] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^gen. sg.') * tryProb_catchZero(prob_cng2cng_linear, 'gen. sg.^-90') * tryProb_catchZero(prob_cng2lem_linear, '-90^' + node2.lemma);
     
     # L -> gen. sg. -> -57 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'gen. sg.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'gen. sg.', '-57')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-57', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[46] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^gen. sg.') * tryProb_catchZero(prob_cng2cng_linear, 'gen. sg.^-57') * tryProb_catchZero(prob_cng2lem_linear, '-57^' + node2.lemma);
     
     # L -> gen. sg. -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'gen. sg.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'gen. sg.', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[47] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^gen. sg.') * tryProb_catchZero(prob_cng2cng_linear, 'gen. sg.^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> gen. sg. -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'gen. sg.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'gen. sg.', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[48] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^gen. sg.') * tryProb_catchZero(prob_cng2cng_linear, 'gen. sg.^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> gen. sg. -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'gen. sg.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'gen. sg.', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[49] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^gen. sg.') * tryProb_catchZero(prob_cng2cng_linear, 'gen. sg.^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> gen. sg. -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'gen. sg.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'gen. sg.', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[50] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^gen. sg.') * tryProb_catchZero(prob_cng2cng_linear, 'gen. sg.^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> gen. sg. -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'gen. sg.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'gen. sg.', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[51] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^gen. sg.') * tryProb_catchZero(prob_cng2cng_linear, 'gen. sg.^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> gen. sg. -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'gen. sg.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'gen. sg.', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[52] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^gen. sg.') * tryProb_catchZero(prob_cng2cng_linear, 'gen. sg.^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> gen. sg. -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'gen. sg.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'gen. sg.', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[53] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^gen. sg.') * tryProb_catchZero(prob_cng2cng_linear, 'gen. sg.^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> gen. sg. -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'gen. sg.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'gen. sg.', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[54] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^gen. sg.') * tryProb_catchZero(prob_cng2cng_linear, 'gen. sg.^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> gen. sg. -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'gen. sg.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'gen. sg.', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[55] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^gen. sg.') * tryProb_catchZero(prob_cng2cng_linear, 'gen. sg.^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 15_sp -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '15_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '15_sp', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[56] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^15_sp') * tryProb_catchZero(prob_cng2cng_linear, '15_sp^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 5_sp -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_sp', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[57] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_sp') * tryProb_catchZero(prob_cng2cng_linear, '5_sp^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 5_sp -> -151 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_sp', '-151')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-151', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[58] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_sp') * tryProb_catchZero(prob_cng2cng_linear, '5_sp^-151') * tryProb_catchZero(prob_cng2lem_linear, '-151^' + node2.lemma);
     
     # L -> 5_sp -> -57 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_sp', '-57')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-57', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[59] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_sp') * tryProb_catchZero(prob_cng2cng_linear, '5_sp^-57') * tryProb_catchZero(prob_cng2lem_linear, '-57^' + node2.lemma);
     
     # L -> 5_sp -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_sp', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[60] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_sp') * tryProb_catchZero(prob_cng2cng_linear, '5_sp^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 5_sp -> 169 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_sp', '169')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '169', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[61] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_sp') * tryProb_catchZero(prob_cng2cng_linear, '5_sp^169') * tryProb_catchZero(prob_cng2lem_linear, '169^' + node2.lemma);
     
     # L -> 5_sp -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_sp', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[62] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_sp') * tryProb_catchZero(prob_cng2cng_linear, '5_sp^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> 5_sp -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_sp', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[63] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_sp') * tryProb_catchZero(prob_cng2cng_linear, '5_sp^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> 5_sp -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_sp', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[64] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_sp') * tryProb_catchZero(prob_cng2cng_linear, '5_sp^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> 5_sp -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_sp', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[65] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_sp') * tryProb_catchZero(prob_cng2cng_linear, '5_sp^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 5_sp -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_sp', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[66] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_sp') * tryProb_catchZero(prob_cng2cng_linear, '5_sp^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> 5_sp -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_sp', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[67] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_sp') * tryProb_catchZero(prob_cng2cng_linear, '5_sp^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 5_sp -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_sp', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[68] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_sp') * tryProb_catchZero(prob_cng2cng_linear, '5_sp^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> 5_sp -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_sp', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[69] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_sp') * tryProb_catchZero(prob_cng2cng_linear, '5_sp^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> dat. du. -> 5_sp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'dat. du.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'dat. du.', '5_sp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '5_sp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[70] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^dat. du.') * tryProb_catchZero(prob_cng2cng_linear, 'dat. du.^5_sp') * tryProb_catchZero(prob_cng2lem_linear, '5_sp^' + node2.lemma);
     
     # L -> dat. du. -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'dat. du.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'dat. du.', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[71] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^dat. du.') * tryProb_catchZero(prob_cng2cng_linear, 'dat. du.^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> dat. du. -> -151 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'dat. du.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'dat. du.', '-151')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-151', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[72] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^dat. du.') * tryProb_catchZero(prob_cng2cng_linear, 'dat. du.^-151') * tryProb_catchZero(prob_cng2lem_linear, '-151^' + node2.lemma);
     
     # L -> dat. du. -> -90 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'dat. du.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'dat. du.', '-90')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-90', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[73] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^dat. du.') * tryProb_catchZero(prob_cng2cng_linear, 'dat. du.^-90') * tryProb_catchZero(prob_cng2lem_linear, '-90^' + node2.lemma);
     
     # L -> dat. du. -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'dat. du.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'dat. du.', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[74] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^dat. du.') * tryProb_catchZero(prob_cng2cng_linear, 'dat. du.^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> dat. du. -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'dat. du.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'dat. du.', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[75] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^dat. du.') * tryProb_catchZero(prob_cng2cng_linear, 'dat. du.^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> dat. du. -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'dat. du.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'dat. du.', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[76] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^dat. du.') * tryProb_catchZero(prob_cng2cng_linear, 'dat. du.^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> dat. du. -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'dat. du.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'dat. du.', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[77] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^dat. du.') * tryProb_catchZero(prob_cng2cng_linear, 'dat. du.^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> dat. du. -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'dat. du.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'dat. du.', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[78] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^dat. du.') * tryProb_catchZero(prob_cng2cng_linear, 'dat. du.^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> dat. du. -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'dat. du.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'dat. du.', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[79] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^dat. du.') * tryProb_catchZero(prob_cng2cng_linear, 'dat. du.^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> dat. du. -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'dat. du.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'dat. du.', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[80] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^dat. du.') * tryProb_catchZero(prob_cng2cng_linear, 'dat. du.^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> dat. du. -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'dat. du.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'dat. du.', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[81] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^dat. du.') * tryProb_catchZero(prob_cng2cng_linear, 'dat. du.^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> dat. du. -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'dat. du.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'dat. du.', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[82] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^dat. du.') * tryProb_catchZero(prob_cng2cng_linear, 'dat. du.^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> dat. du. -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'dat. du.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'dat. du.', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[83] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^dat. du.') * tryProb_catchZero(prob_cng2cng_linear, 'dat. du.^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> -37 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-37')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-37', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[84] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-37') * tryProb_catchZero(prob_cng2cng_linear, '-37^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> -37 -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-37')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-37', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[85] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-37') * tryProb_catchZero(prob_cng2cng_linear, '-37^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> -37 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-37')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-37', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[86] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-37') * tryProb_catchZero(prob_cng2cng_linear, '-37^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> -37 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-37')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-37', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[87] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-37') * tryProb_catchZero(prob_cng2cng_linear, '-37^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> -37 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-37')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-37', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[88] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-37') * tryProb_catchZero(prob_cng2cng_linear, '-37^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 15_du -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '15_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '15_du', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[89] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^15_du') * tryProb_catchZero(prob_cng2cng_linear, '15_du^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 15_du -> -151 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '15_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '15_du', '-151')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-151', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[90] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^15_du') * tryProb_catchZero(prob_cng2cng_linear, '15_du^-151') * tryProb_catchZero(prob_cng2lem_linear, '-151^' + node2.lemma);
     
     # L -> 15_du -> -90 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '15_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '15_du', '-90')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-90', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[91] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^15_du') * tryProb_catchZero(prob_cng2cng_linear, '15_du^-90') * tryProb_catchZero(prob_cng2lem_linear, '-90^' + node2.lemma);
     
     # L -> 15_du -> -57 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '15_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '15_du', '-57')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-57', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[92] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^15_du') * tryProb_catchZero(prob_cng2cng_linear, '15_du^-57') * tryProb_catchZero(prob_cng2lem_linear, '-57^' + node2.lemma);
     
     # L -> 15_du -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '15_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '15_du', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[93] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^15_du') * tryProb_catchZero(prob_cng2cng_linear, '15_du^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 15_du -> 169 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '15_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '15_du', '169')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '169', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[94] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^15_du') * tryProb_catchZero(prob_cng2cng_linear, '15_du^169') * tryProb_catchZero(prob_cng2lem_linear, '169^' + node2.lemma);
     
     # L -> 15_du -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '15_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '15_du', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[95] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^15_du') * tryProb_catchZero(prob_cng2cng_linear, '15_du^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 15_du -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '15_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '15_du', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[96] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^15_du') * tryProb_catchZero(prob_cng2cng_linear, '15_du^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> 15_du -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '15_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '15_du', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[97] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^15_du') * tryProb_catchZero(prob_cng2cng_linear, '15_du^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> 15_du -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '15_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '15_du', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[98] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^15_du') * tryProb_catchZero(prob_cng2cng_linear, '15_du^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> 15_du -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '15_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '15_du', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[99] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^15_du') * tryProb_catchZero(prob_cng2cng_linear, '15_du^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> 15_du -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '15_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '15_du', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[100] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^15_du') * tryProb_catchZero(prob_cng2cng_linear, '15_du^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 15_du -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '15_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '15_du', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[101] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^15_du') * tryProb_catchZero(prob_cng2cng_linear, '15_du^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> 15_du -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '15_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '15_du', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[102] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^15_du') * tryProb_catchZero(prob_cng2cng_linear, '15_du^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 15_du -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '15_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '15_du', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[103] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^15_du') * tryProb_catchZero(prob_cng2cng_linear, '15_du^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> 15_du -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '15_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '15_du', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[104] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^15_du') * tryProb_catchZero(prob_cng2cng_linear, '15_du^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> 15_du -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '15_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '15_du', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[105] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^15_du') * tryProb_catchZero(prob_cng2cng_linear, '15_du^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> -151 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-151')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-151', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[106] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-151') * tryProb_catchZero(prob_cng2cng_linear, '-151^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> -151 -> -90 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-151')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-151', '-90')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-90', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[107] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-151') * tryProb_catchZero(prob_cng2cng_linear, '-151^-90') * tryProb_catchZero(prob_cng2lem_linear, '-90^' + node2.lemma);
     
     # L -> -151 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-151')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-151', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[108] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-151') * tryProb_catchZero(prob_cng2cng_linear, '-151^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> -151 -> 169 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-151')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-151', '169')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '169', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[109] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-151') * tryProb_catchZero(prob_cng2cng_linear, '-151^169') * tryProb_catchZero(prob_cng2lem_linear, '169^' + node2.lemma);
     
     # L -> -151 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-151')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-151', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[110] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-151') * tryProb_catchZero(prob_cng2cng_linear, '-151^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> -151 -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-151')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-151', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[111] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-151') * tryProb_catchZero(prob_cng2cng_linear, '-151^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> -151 -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-151')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-151', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[112] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-151') * tryProb_catchZero(prob_cng2cng_linear, '-151^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> -151 -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-151')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-151', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[113] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-151') * tryProb_catchZero(prob_cng2cng_linear, '-151^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> -151 -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-151')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-151', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[114] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-151') * tryProb_catchZero(prob_cng2cng_linear, '-151^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> -151 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-151')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-151', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[115] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-151') * tryProb_catchZero(prob_cng2cng_linear, '-151^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> -151 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-151')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-151', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[116] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-151') * tryProb_catchZero(prob_cng2cng_linear, '-151^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> -151 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-151')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-151', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[117] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-151') * tryProb_catchZero(prob_cng2cng_linear, '-151^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> -151 -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-151')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-151', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[118] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-151') * tryProb_catchZero(prob_cng2cng_linear, '-151^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> -151 -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-151')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-151', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[119] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-151') * tryProb_catchZero(prob_cng2cng_linear, '-151^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> -151 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-151')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-151', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[120] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-151') * tryProb_catchZero(prob_cng2cng_linear, '-151^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 39 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '39')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '39', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[121] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^39') * tryProb_catchZero(prob_cng2cng_linear, '39^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 39 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '39')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '39', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[122] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^39') * tryProb_catchZero(prob_cng2cng_linear, '39^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 39 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '39')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '39', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[123] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^39') * tryProb_catchZero(prob_cng2cng_linear, '39^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 39 -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '39')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '39', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[124] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^39') * tryProb_catchZero(prob_cng2cng_linear, '39^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> 39 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '39')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '39', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[125] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^39') * tryProb_catchZero(prob_cng2cng_linear, '39^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 39 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '39')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '39', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[126] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^39') * tryProb_catchZero(prob_cng2cng_linear, '39^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> 39 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '39')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '39', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[127] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^39') * tryProb_catchZero(prob_cng2cng_linear, '39^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 39 -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '39')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '39', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[128] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^39') * tryProb_catchZero(prob_cng2cng_linear, '39^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> 39 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '39')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '39', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[129] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^39') * tryProb_catchZero(prob_cng2cng_linear, '39^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 12_fp -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '12_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '12_fp', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[130] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^12_fp') * tryProb_catchZero(prob_cng2cng_linear, '12_fp^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> -306 -> 5_sp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-306')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-306', '5_sp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '5_sp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[131] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-306') * tryProb_catchZero(prob_cng2cng_linear, '-306^5_sp') * tryProb_catchZero(prob_cng2lem_linear, '5_sp^' + node2.lemma);
     
     # L -> -306 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-306')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-306', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[132] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-306') * tryProb_catchZero(prob_cng2cng_linear, '-306^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> -306 -> -151 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-306')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-306', '-151')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-151', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[133] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-306') * tryProb_catchZero(prob_cng2cng_linear, '-306^-151') * tryProb_catchZero(prob_cng2lem_linear, '-151^' + node2.lemma);
     
     # L -> -306 -> -90 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-306')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-306', '-90')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-90', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[134] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-306') * tryProb_catchZero(prob_cng2cng_linear, '-306^-90') * tryProb_catchZero(prob_cng2lem_linear, '-90^' + node2.lemma);
     
     # L -> -306 -> -57 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-306')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-306', '-57')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-57', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[135] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-306') * tryProb_catchZero(prob_cng2cng_linear, '-306^-57') * tryProb_catchZero(prob_cng2lem_linear, '-57^' + node2.lemma);
     
     # L -> -306 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-306')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-306', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[136] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-306') * tryProb_catchZero(prob_cng2cng_linear, '-306^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> -306 -> 169 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-306')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-306', '169')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '169', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[137] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-306') * tryProb_catchZero(prob_cng2cng_linear, '-306^169') * tryProb_catchZero(prob_cng2lem_linear, '169^' + node2.lemma);
     
     # L -> -306 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-306')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-306', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[138] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-306') * tryProb_catchZero(prob_cng2cng_linear, '-306^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> -306 -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-306')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-306', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[139] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-306') * tryProb_catchZero(prob_cng2cng_linear, '-306^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> -306 -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-306')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-306', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[140] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-306') * tryProb_catchZero(prob_cng2cng_linear, '-306^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> -306 -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-306')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-306', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[141] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-306') * tryProb_catchZero(prob_cng2cng_linear, '-306^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> -306 -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-306')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-306', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[142] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-306') * tryProb_catchZero(prob_cng2cng_linear, '-306^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> -306 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-306')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-306', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[143] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-306') * tryProb_catchZero(prob_cng2cng_linear, '-306^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> -306 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-306')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-306', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[144] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-306') * tryProb_catchZero(prob_cng2cng_linear, '-306^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> -306 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-306')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-306', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[145] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-306') * tryProb_catchZero(prob_cng2cng_linear, '-306^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> -306 -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-306')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-306', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[146] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-306') * tryProb_catchZero(prob_cng2cng_linear, '-306^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> -306 -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-306')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-306', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[147] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-306') * tryProb_catchZero(prob_cng2cng_linear, '-306^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> -306 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-306')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-306', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[148] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-306') * tryProb_catchZero(prob_cng2cng_linear, '-306^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> -64 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-64')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-64', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[149] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-64') * tryProb_catchZero(prob_cng2cng_linear, '-64^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> -64 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-64')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-64', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[150] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-64') * tryProb_catchZero(prob_cng2cng_linear, '-64^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> -64 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-64')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-64', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[151] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-64') * tryProb_catchZero(prob_cng2cng_linear, '-64^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> -64 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-64')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-64', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[152] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-64') * tryProb_catchZero(prob_cng2cng_linear, '-64^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> -64 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-64')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-64', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[153] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-64') * tryProb_catchZero(prob_cng2cng_linear, '-64^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> -90 -> -151 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-90')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-90', '-151')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-151', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[154] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-90') * tryProb_catchZero(prob_cng2cng_linear, '-90^-151') * tryProb_catchZero(prob_cng2lem_linear, '-151^' + node2.lemma);
     
     # L -> -90 -> -90 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-90')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-90', '-90')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-90', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[155] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-90') * tryProb_catchZero(prob_cng2cng_linear, '-90^-90') * tryProb_catchZero(prob_cng2lem_linear, '-90^' + node2.lemma);
     
     # L -> -90 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-90')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-90', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[156] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-90') * tryProb_catchZero(prob_cng2cng_linear, '-90^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> -90 -> 169 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-90')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-90', '169')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '169', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[157] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-90') * tryProb_catchZero(prob_cng2cng_linear, '-90^169') * tryProb_catchZero(prob_cng2lem_linear, '169^' + node2.lemma);
     
     # L -> -90 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-90')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-90', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[158] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-90') * tryProb_catchZero(prob_cng2cng_linear, '-90^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> -90 -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-90')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-90', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[159] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-90') * tryProb_catchZero(prob_cng2cng_linear, '-90^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> -90 -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-90')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-90', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[160] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-90') * tryProb_catchZero(prob_cng2cng_linear, '-90^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> -90 -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-90')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-90', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[161] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-90') * tryProb_catchZero(prob_cng2cng_linear, '-90^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> -90 -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-90')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-90', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[162] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-90') * tryProb_catchZero(prob_cng2cng_linear, '-90^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> -90 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-90')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-90', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[163] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-90') * tryProb_catchZero(prob_cng2cng_linear, '-90^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> -90 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-90')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-90', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[164] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-90') * tryProb_catchZero(prob_cng2cng_linear, '-90^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> -90 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-90')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-90', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[165] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-90') * tryProb_catchZero(prob_cng2cng_linear, '-90^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> -90 -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-90')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-90', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[166] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-90') * tryProb_catchZero(prob_cng2cng_linear, '-90^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> -90 -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-90')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-90', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[167] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-90') * tryProb_catchZero(prob_cng2cng_linear, '-90^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> -90 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-90')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-90', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[168] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-90') * tryProb_catchZero(prob_cng2cng_linear, '-90^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> -210 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-210')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-210', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[169] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-210') * tryProb_catchZero(prob_cng2cng_linear, '-210^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> -210 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-210')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-210', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[170] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-210') * tryProb_catchZero(prob_cng2cng_linear, '-210^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> -210 -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-210')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-210', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[171] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-210') * tryProb_catchZero(prob_cng2cng_linear, '-210^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> -210 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-210')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-210', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[172] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-210') * tryProb_catchZero(prob_cng2cng_linear, '-210^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> -210 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-210')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-210', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[173] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-210') * tryProb_catchZero(prob_cng2cng_linear, '-210^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> -210 -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-210')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-210', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[174] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-210') * tryProb_catchZero(prob_cng2cng_linear, '-210^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> -210 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-210')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-210', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[175] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-210') * tryProb_catchZero(prob_cng2cng_linear, '-210^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> -159 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-159')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-159', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[176] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-159') * tryProb_catchZero(prob_cng2cng_linear, '-159^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> -159 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-159')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-159', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[177] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-159') * tryProb_catchZero(prob_cng2cng_linear, '-159^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> -159 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-159')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-159', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[178] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-159') * tryProb_catchZero(prob_cng2cng_linear, '-159^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> -159 -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-159')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-159', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[179] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-159') * tryProb_catchZero(prob_cng2cng_linear, '-159^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> -159 -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-159')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-159', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[180] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-159') * tryProb_catchZero(prob_cng2cng_linear, '-159^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> -159 -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-159')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-159', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[181] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-159') * tryProb_catchZero(prob_cng2cng_linear, '-159^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> -159 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-159')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-159', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[182] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-159') * tryProb_catchZero(prob_cng2cng_linear, '-159^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> -159 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-159')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-159', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[183] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-159') * tryProb_catchZero(prob_cng2cng_linear, '-159^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> -159 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-159')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-159', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[184] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-159') * tryProb_catchZero(prob_cng2cng_linear, '-159^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> -159 -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-159')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-159', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[185] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-159') * tryProb_catchZero(prob_cng2cng_linear, '-159^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> -159 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-159')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-159', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[186] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-159') * tryProb_catchZero(prob_cng2cng_linear, '-159^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> -57 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-57')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-57', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[187] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-57') * tryProb_catchZero(prob_cng2cng_linear, '-57^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> -57 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-57')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-57', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[188] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-57') * tryProb_catchZero(prob_cng2cng_linear, '-57^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> -57 -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-57')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-57', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[189] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-57') * tryProb_catchZero(prob_cng2cng_linear, '-57^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> -57 -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-57')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-57', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[190] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-57') * tryProb_catchZero(prob_cng2cng_linear, '-57^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> -57 -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-57')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-57', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[191] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-57') * tryProb_catchZero(prob_cng2cng_linear, '-57^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> -57 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-57')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-57', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[192] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-57') * tryProb_catchZero(prob_cng2cng_linear, '-57^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> -57 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-57')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-57', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[193] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-57') * tryProb_catchZero(prob_cng2cng_linear, '-57^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> -57 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-57')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-57', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[194] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-57') * tryProb_catchZero(prob_cng2cng_linear, '-57^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> -57 -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-57')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-57', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[195] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-57') * tryProb_catchZero(prob_cng2cng_linear, '-57^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> -57 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-57')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-57', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[196] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-57') * tryProb_catchZero(prob_cng2cng_linear, '-57^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 10_sp -> 5_sp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '10_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '10_sp', '5_sp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '5_sp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[197] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^10_sp') * tryProb_catchZero(prob_cng2cng_linear, '10_sp^5_sp') * tryProb_catchZero(prob_cng2lem_linear, '5_sp^' + node2.lemma);
     
     # L -> 10_sp -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '10_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '10_sp', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[198] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^10_sp') * tryProb_catchZero(prob_cng2cng_linear, '10_sp^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 10_sp -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '10_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '10_sp', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[199] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^10_sp') * tryProb_catchZero(prob_cng2cng_linear, '10_sp^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 10_sp -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '10_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '10_sp', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[200] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^10_sp') * tryProb_catchZero(prob_cng2cng_linear, '10_sp^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 10_sp -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '10_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '10_sp', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[201] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^10_sp') * tryProb_catchZero(prob_cng2cng_linear, '10_sp^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> 10_sp -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '10_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '10_sp', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[202] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^10_sp') * tryProb_catchZero(prob_cng2cng_linear, '10_sp^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> 10_sp -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '10_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '10_sp', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[203] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^10_sp') * tryProb_catchZero(prob_cng2cng_linear, '10_sp^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> 10_sp -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '10_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '10_sp', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[204] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^10_sp') * tryProb_catchZero(prob_cng2cng_linear, '10_sp^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 10_sp -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '10_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '10_sp', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[205] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^10_sp') * tryProb_catchZero(prob_cng2cng_linear, '10_sp^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> 10_sp -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '10_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '10_sp', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[206] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^10_sp') * tryProb_catchZero(prob_cng2cng_linear, '10_sp^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 10_sp -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '10_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '10_sp', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[207] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^10_sp') * tryProb_catchZero(prob_cng2cng_linear, '10_sp^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> 10_sp -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '10_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '10_sp', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[208] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^10_sp') * tryProb_catchZero(prob_cng2cng_linear, '10_sp^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 6_sg -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '6_sg')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '6_sg', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[209] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^6_sg') * tryProb_catchZero(prob_cng2cng_linear, '6_sg^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 6_sg -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '6_sg')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '6_sg', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[210] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^6_sg') * tryProb_catchZero(prob_cng2cng_linear, '6_sg^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 6_sg -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '6_sg')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '6_sg', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[211] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^6_sg') * tryProb_catchZero(prob_cng2cng_linear, '6_sg^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 6_sg -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '6_sg')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '6_sg', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[212] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^6_sg') * tryProb_catchZero(prob_cng2cng_linear, '6_sg^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> 6_sg -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '6_sg')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '6_sg', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[213] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^6_sg') * tryProb_catchZero(prob_cng2cng_linear, '6_sg^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> 6_sg -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '6_sg')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '6_sg', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[214] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^6_sg') * tryProb_catchZero(prob_cng2cng_linear, '6_sg^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 6_sg -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '6_sg')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '6_sg', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[215] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^6_sg') * tryProb_catchZero(prob_cng2cng_linear, '6_sg^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 6_sg -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '6_sg')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '6_sg', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[216] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^6_sg') * tryProb_catchZero(prob_cng2cng_linear, '6_sg^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 8_fp -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_fp', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[217] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_fp') * tryProb_catchZero(prob_cng2cng_linear, '8_fp^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 8_fp -> -151 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_fp', '-151')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-151', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[218] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_fp') * tryProb_catchZero(prob_cng2cng_linear, '8_fp^-151') * tryProb_catchZero(prob_cng2lem_linear, '-151^' + node2.lemma);
     
     # L -> 8_fp -> -57 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_fp', '-57')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-57', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[219] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_fp') * tryProb_catchZero(prob_cng2cng_linear, '8_fp^-57') * tryProb_catchZero(prob_cng2lem_linear, '-57^' + node2.lemma);
     
     # L -> 8_fp -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_fp', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[220] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_fp') * tryProb_catchZero(prob_cng2cng_linear, '8_fp^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 8_fp -> 169 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_fp', '169')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '169', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[221] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_fp') * tryProb_catchZero(prob_cng2cng_linear, '8_fp^169') * tryProb_catchZero(prob_cng2lem_linear, '169^' + node2.lemma);
     
     # L -> 8_fp -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_fp', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[222] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_fp') * tryProb_catchZero(prob_cng2cng_linear, '8_fp^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 8_fp -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_fp', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[223] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_fp') * tryProb_catchZero(prob_cng2cng_linear, '8_fp^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> 8_fp -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_fp', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[224] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_fp') * tryProb_catchZero(prob_cng2cng_linear, '8_fp^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> 8_fp -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_fp', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[225] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_fp') * tryProb_catchZero(prob_cng2cng_linear, '8_fp^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> 8_fp -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_fp', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[226] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_fp') * tryProb_catchZero(prob_cng2cng_linear, '8_fp^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> 8_fp -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_fp', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[227] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_fp') * tryProb_catchZero(prob_cng2cng_linear, '8_fp^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 8_fp -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_fp', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[228] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_fp') * tryProb_catchZero(prob_cng2cng_linear, '8_fp^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> 8_fp -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_fp', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[229] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_fp') * tryProb_catchZero(prob_cng2cng_linear, '8_fp^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 8_fp -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_fp', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[230] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_fp') * tryProb_catchZero(prob_cng2cng_linear, '8_fp^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> 8_fp -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_fp', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[231] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_fp') * tryProb_catchZero(prob_cng2cng_linear, '8_fp^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> 8_fp -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_fp', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[232] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_fp') * tryProb_catchZero(prob_cng2cng_linear, '8_fp^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 4_pl -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '4_pl')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '4_pl', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[233] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^4_pl') * tryProb_catchZero(prob_cng2cng_linear, '4_pl^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 4_pl -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '4_pl')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '4_pl', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[234] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^4_pl') * tryProb_catchZero(prob_cng2cng_linear, '4_pl^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 4_pl -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '4_pl')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '4_pl', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[235] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^4_pl') * tryProb_catchZero(prob_cng2cng_linear, '4_pl^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 4_pl -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '4_pl')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '4_pl', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[236] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^4_pl') * tryProb_catchZero(prob_cng2cng_linear, '4_pl^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> 4_pl -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '4_pl')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '4_pl', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[237] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^4_pl') * tryProb_catchZero(prob_cng2cng_linear, '4_pl^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> 4_pl -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '4_pl')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '4_pl', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[238] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^4_pl') * tryProb_catchZero(prob_cng2cng_linear, '4_pl^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> 4_pl -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '4_pl')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '4_pl', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[239] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^4_pl') * tryProb_catchZero(prob_cng2cng_linear, '4_pl^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> 4_pl -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '4_pl')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '4_pl', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[240] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^4_pl') * tryProb_catchZero(prob_cng2cng_linear, '4_pl^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 4_pl -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '4_pl')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '4_pl', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[241] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^4_pl') * tryProb_catchZero(prob_cng2cng_linear, '4_pl^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> 4_pl -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '4_pl')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '4_pl', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[242] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^4_pl') * tryProb_catchZero(prob_cng2cng_linear, '4_pl^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 4_pl -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '4_pl')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '4_pl', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[243] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^4_pl') * tryProb_catchZero(prob_cng2cng_linear, '4_pl^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> 4_pl -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '4_pl')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '4_pl', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[244] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^4_pl') * tryProb_catchZero(prob_cng2cng_linear, '4_pl^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> 4_pl -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '4_pl')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '4_pl', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[245] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^4_pl') * tryProb_catchZero(prob_cng2cng_linear, '4_pl^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 169 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '169')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '169', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[246] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^169') * tryProb_catchZero(prob_cng2cng_linear, '169^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 169 -> -151 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '169')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '169', '-151')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-151', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[247] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^169') * tryProb_catchZero(prob_cng2cng_linear, '169^-151') * tryProb_catchZero(prob_cng2lem_linear, '-151^' + node2.lemma);
     
     # L -> 169 -> -90 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '169')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '169', '-90')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-90', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[248] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^169') * tryProb_catchZero(prob_cng2cng_linear, '169^-90') * tryProb_catchZero(prob_cng2lem_linear, '-90^' + node2.lemma);
     
     # L -> 169 -> -57 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '169')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '169', '-57')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-57', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[249] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^169') * tryProb_catchZero(prob_cng2cng_linear, '169^-57') * tryProb_catchZero(prob_cng2lem_linear, '-57^' + node2.lemma);
     
     # L -> 169 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '169')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '169', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[250] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^169') * tryProb_catchZero(prob_cng2cng_linear, '169^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 169 -> 169 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '169')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '169', '169')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '169', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[251] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^169') * tryProb_catchZero(prob_cng2cng_linear, '169^169') * tryProb_catchZero(prob_cng2lem_linear, '169^' + node2.lemma);
     
     # L -> 169 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '169')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '169', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[252] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^169') * tryProb_catchZero(prob_cng2cng_linear, '169^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 169 -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '169')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '169', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[253] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^169') * tryProb_catchZero(prob_cng2cng_linear, '169^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> 169 -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '169')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '169', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[254] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^169') * tryProb_catchZero(prob_cng2cng_linear, '169^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> 169 -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '169')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '169', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[255] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^169') * tryProb_catchZero(prob_cng2cng_linear, '169^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> 169 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '169')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '169', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[256] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^169') * tryProb_catchZero(prob_cng2cng_linear, '169^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 169 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '169')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '169', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[257] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^169') * tryProb_catchZero(prob_cng2cng_linear, '169^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> 169 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '169')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '169', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[258] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^169') * tryProb_catchZero(prob_cng2cng_linear, '169^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 169 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '169')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '169', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[259] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^169') * tryProb_catchZero(prob_cng2cng_linear, '169^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 54 -> 5_sp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', '5_sp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '5_sp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[260] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^5_sp') * tryProb_catchZero(prob_cng2lem_linear, '5_sp^' + node2.lemma);
     
     # L -> 54 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[261] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 54 -> -151 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', '-151')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-151', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[262] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^-151') * tryProb_catchZero(prob_cng2lem_linear, '-151^' + node2.lemma);
     
     # L -> 54 -> -90 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', '-90')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-90', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[263] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^-90') * tryProb_catchZero(prob_cng2lem_linear, '-90^' + node2.lemma);
     
     # L -> 54 -> -57 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', '-57')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-57', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[264] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^-57') * tryProb_catchZero(prob_cng2lem_linear, '-57^' + node2.lemma);
     
     # L -> 54 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[265] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 54 -> 169 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', '169')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '169', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[266] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^169') * tryProb_catchZero(prob_cng2lem_linear, '169^' + node2.lemma);
     
     # L -> 54 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[267] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 54 -> 114 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', '114')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '114', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[268] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^114') * tryProb_catchZero(prob_cng2lem_linear, '114^' + node2.lemma);
     
     # L -> 54 -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[269] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> 54 -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[270] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> 54 -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[271] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> 54 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[272] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 54 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[273] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> 54 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[274] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 54 -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[275] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> 54 -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[276] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> 54 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[277] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 114 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '114')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '114', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[278] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^114') * tryProb_catchZero(prob_cng2cng_linear, '114^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 114 -> -151 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '114')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '114', '-151')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-151', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[279] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^114') * tryProb_catchZero(prob_cng2cng_linear, '114^-151') * tryProb_catchZero(prob_cng2lem_linear, '-151^' + node2.lemma);
     
     # L -> 114 -> -90 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '114')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '114', '-90')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-90', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[280] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^114') * tryProb_catchZero(prob_cng2cng_linear, '114^-90') * tryProb_catchZero(prob_cng2lem_linear, '-90^' + node2.lemma);
     
     # L -> 114 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '114')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '114', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[281] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^114') * tryProb_catchZero(prob_cng2cng_linear, '114^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 114 -> 169 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '114')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '114', '169')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '169', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[282] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^114') * tryProb_catchZero(prob_cng2cng_linear, '114^169') * tryProb_catchZero(prob_cng2lem_linear, '169^' + node2.lemma);
     
     # L -> 114 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '114')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '114', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[283] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^114') * tryProb_catchZero(prob_cng2cng_linear, '114^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 114 -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '114')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '114', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[284] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^114') * tryProb_catchZero(prob_cng2cng_linear, '114^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> 114 -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '114')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '114', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[285] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^114') * tryProb_catchZero(prob_cng2cng_linear, '114^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> 114 -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '114')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '114', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[286] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^114') * tryProb_catchZero(prob_cng2cng_linear, '114^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> 114 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '114')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '114', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[287] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^114') * tryProb_catchZero(prob_cng2cng_linear, '114^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 114 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '114')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '114', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[288] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^114') * tryProb_catchZero(prob_cng2cng_linear, '114^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> 114 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '114')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '114', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[289] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^114') * tryProb_catchZero(prob_cng2cng_linear, '114^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 114 -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '114')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '114', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[290] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^114') * tryProb_catchZero(prob_cng2cng_linear, '114^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> 114 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '114')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '114', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[291] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^114') * tryProb_catchZero(prob_cng2cng_linear, '114^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> loc. sg. -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'loc. sg.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'loc. sg.', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[292] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^loc. sg.') * tryProb_catchZero(prob_cng2cng_linear, 'loc. sg.^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> -139 -> 5_sp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-139', '5_sp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '5_sp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[293] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-139') * tryProb_catchZero(prob_cng2cng_linear, '-139^5_sp') * tryProb_catchZero(prob_cng2lem_linear, '5_sp^' + node2.lemma);
     
     # L -> -139 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-139', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[294] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-139') * tryProb_catchZero(prob_cng2cng_linear, '-139^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> -139 -> -151 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-139', '-151')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-151', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[295] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-139') * tryProb_catchZero(prob_cng2cng_linear, '-139^-151') * tryProb_catchZero(prob_cng2lem_linear, '-151^' + node2.lemma);
     
     # L -> -139 -> -90 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-139', '-90')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-90', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[296] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-139') * tryProb_catchZero(prob_cng2cng_linear, '-139^-90') * tryProb_catchZero(prob_cng2lem_linear, '-90^' + node2.lemma);
     
     # L -> -139 -> -57 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-139', '-57')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-57', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[297] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-139') * tryProb_catchZero(prob_cng2cng_linear, '-139^-57') * tryProb_catchZero(prob_cng2lem_linear, '-57^' + node2.lemma);
     
     # L -> -139 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-139', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[298] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-139') * tryProb_catchZero(prob_cng2cng_linear, '-139^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> -139 -> 169 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-139', '169')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '169', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[299] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-139') * tryProb_catchZero(prob_cng2cng_linear, '-139^169') * tryProb_catchZero(prob_cng2lem_linear, '169^' + node2.lemma);
     
     # L -> -139 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-139', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[300] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-139') * tryProb_catchZero(prob_cng2cng_linear, '-139^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> -139 -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-139', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[301] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-139') * tryProb_catchZero(prob_cng2cng_linear, '-139^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> -139 -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-139', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[302] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-139') * tryProb_catchZero(prob_cng2cng_linear, '-139^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> -139 -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-139', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[303] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-139') * tryProb_catchZero(prob_cng2cng_linear, '-139^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> -139 -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-139', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[304] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-139') * tryProb_catchZero(prob_cng2cng_linear, '-139^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> -139 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-139', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[305] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-139') * tryProb_catchZero(prob_cng2cng_linear, '-139^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> -139 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-139', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[306] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-139') * tryProb_catchZero(prob_cng2cng_linear, '-139^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> -139 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-139', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[307] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-139') * tryProb_catchZero(prob_cng2cng_linear, '-139^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> -139 -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-139', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[308] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-139') * tryProb_catchZero(prob_cng2cng_linear, '-139^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> -139 -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-139', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[309] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-139') * tryProb_catchZero(prob_cng2cng_linear, '-139^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> -139 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-139', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[310] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-139') * tryProb_catchZero(prob_cng2cng_linear, '-139^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 8_du -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_du', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[311] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_du') * tryProb_catchZero(prob_cng2cng_linear, '8_du^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 8_du -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_du', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[312] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_du') * tryProb_catchZero(prob_cng2cng_linear, '8_du^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 8_du -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_du', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[313] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_du') * tryProb_catchZero(prob_cng2cng_linear, '8_du^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 8_du -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_du', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[314] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_du') * tryProb_catchZero(prob_cng2cng_linear, '8_du^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> 8_du -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_du', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[315] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_du') * tryProb_catchZero(prob_cng2cng_linear, '8_du^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> 8_du -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_du', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[316] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_du') * tryProb_catchZero(prob_cng2cng_linear, '8_du^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 8_du -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_du', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[317] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_du') * tryProb_catchZero(prob_cng2cng_linear, '8_du^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 8_du -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_du', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[318] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_du') * tryProb_catchZero(prob_cng2cng_linear, '8_du^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> 8_du -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_du', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[319] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_du') * tryProb_catchZero(prob_cng2cng_linear, '8_du^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> -166 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-166')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-166', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[320] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-166') * tryProb_catchZero(prob_cng2cng_linear, '-166^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> -166 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-166')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-166', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[321] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-166') * tryProb_catchZero(prob_cng2cng_linear, '-166^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> -166 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-166')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-166', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[322] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-166') * tryProb_catchZero(prob_cng2cng_linear, '-166^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> -166 -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-166')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-166', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[323] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-166') * tryProb_catchZero(prob_cng2cng_linear, '-166^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> -166 -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-166')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-166', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[324] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-166') * tryProb_catchZero(prob_cng2cng_linear, '-166^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> -166 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-166')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-166', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[325] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-166') * tryProb_catchZero(prob_cng2cng_linear, '-166^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> -166 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-166')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-166', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[326] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-166') * tryProb_catchZero(prob_cng2cng_linear, '-166^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> -166 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-166')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-166', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[327] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-166') * tryProb_catchZero(prob_cng2cng_linear, '-166^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> -166 -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-166')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-166', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[328] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-166') * tryProb_catchZero(prob_cng2cng_linear, '-166^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> -166 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-166')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-166', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[329] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-166') * tryProb_catchZero(prob_cng2cng_linear, '-166^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 139 -> 5_sp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '139', '5_sp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '5_sp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[330] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^139') * tryProb_catchZero(prob_cng2cng_linear, '139^5_sp') * tryProb_catchZero(prob_cng2lem_linear, '5_sp^' + node2.lemma);
     
     # L -> 139 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '139', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[331] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^139') * tryProb_catchZero(prob_cng2cng_linear, '139^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 139 -> -90 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '139', '-90')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-90', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[332] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^139') * tryProb_catchZero(prob_cng2cng_linear, '139^-90') * tryProb_catchZero(prob_cng2lem_linear, '-90^' + node2.lemma);
     
     # L -> 139 -> -57 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '139', '-57')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-57', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[333] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^139') * tryProb_catchZero(prob_cng2cng_linear, '139^-57') * tryProb_catchZero(prob_cng2lem_linear, '-57^' + node2.lemma);
     
     # L -> 139 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '139', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[334] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^139') * tryProb_catchZero(prob_cng2cng_linear, '139^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 139 -> 169 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '139', '169')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '169', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[335] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^139') * tryProb_catchZero(prob_cng2cng_linear, '139^169') * tryProb_catchZero(prob_cng2lem_linear, '169^' + node2.lemma);
     
     # L -> 139 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '139', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[336] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^139') * tryProb_catchZero(prob_cng2cng_linear, '139^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 139 -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '139', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[337] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^139') * tryProb_catchZero(prob_cng2cng_linear, '139^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> 139 -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '139', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[338] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^139') * tryProb_catchZero(prob_cng2cng_linear, '139^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> 139 -> 135 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '139', '135')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '135', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[339] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^139') * tryProb_catchZero(prob_cng2cng_linear, '139^135') * tryProb_catchZero(prob_cng2lem_linear, '135^' + node2.lemma);
     
     # L -> 139 -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '139', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[340] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^139') * tryProb_catchZero(prob_cng2cng_linear, '139^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> 139 -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '139', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[341] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^139') * tryProb_catchZero(prob_cng2cng_linear, '139^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> 139 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '139', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[342] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^139') * tryProb_catchZero(prob_cng2cng_linear, '139^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 139 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '139', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[343] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^139') * tryProb_catchZero(prob_cng2cng_linear, '139^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> 139 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '139', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[344] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^139') * tryProb_catchZero(prob_cng2cng_linear, '139^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 139 -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '139', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[345] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^139') * tryProb_catchZero(prob_cng2cng_linear, '139^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> 139 -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '139', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[346] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^139') * tryProb_catchZero(prob_cng2cng_linear, '139^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> 139 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '139', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[347] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^139') * tryProb_catchZero(prob_cng2cng_linear, '139^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 92 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '92')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '92', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[348] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^92') * tryProb_catchZero(prob_cng2cng_linear, '92^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> pl -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'pl')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'pl', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[349] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^pl') * tryProb_catchZero(prob_cng2cng_linear, 'pl^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> pl -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'pl')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'pl', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[350] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^pl') * tryProb_catchZero(prob_cng2cng_linear, 'pl^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> pl -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'pl')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'pl', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[351] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^pl') * tryProb_catchZero(prob_cng2cng_linear, 'pl^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> pl -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'pl')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'pl', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[352] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^pl') * tryProb_catchZero(prob_cng2cng_linear, 'pl^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> -91 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-91', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[353] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-91') * tryProb_catchZero(prob_cng2cng_linear, '-91^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> -91 -> -151 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-91', '-151')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-151', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[354] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-91') * tryProb_catchZero(prob_cng2cng_linear, '-91^-151') * tryProb_catchZero(prob_cng2lem_linear, '-151^' + node2.lemma);
     
     # L -> -91 -> -90 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-91', '-90')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-90', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[355] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-91') * tryProb_catchZero(prob_cng2cng_linear, '-91^-90') * tryProb_catchZero(prob_cng2lem_linear, '-90^' + node2.lemma);
     
     # L -> -91 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-91', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[356] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-91') * tryProb_catchZero(prob_cng2cng_linear, '-91^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> -91 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-91', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[357] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-91') * tryProb_catchZero(prob_cng2cng_linear, '-91^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> -91 -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-91', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[358] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-91') * tryProb_catchZero(prob_cng2cng_linear, '-91^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> -91 -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-91', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[359] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-91') * tryProb_catchZero(prob_cng2cng_linear, '-91^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> -91 -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-91', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[360] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-91') * tryProb_catchZero(prob_cng2cng_linear, '-91^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> -91 -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-91', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[361] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-91') * tryProb_catchZero(prob_cng2cng_linear, '-91^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> -91 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-91', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[362] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-91') * tryProb_catchZero(prob_cng2cng_linear, '-91^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> -91 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-91', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[363] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-91') * tryProb_catchZero(prob_cng2cng_linear, '-91^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> -91 -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-91', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[364] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-91') * tryProb_catchZero(prob_cng2cng_linear, '-91^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> -91 -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-91', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[365] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-91') * tryProb_catchZero(prob_cng2cng_linear, '-91^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> -91 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-91', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[366] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-91') * tryProb_catchZero(prob_cng2cng_linear, '-91^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 28_sg -> 5_sp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '28_sg')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '28_sg', '5_sp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '5_sp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[367] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^28_sg') * tryProb_catchZero(prob_cng2cng_linear, '28_sg^5_sp') * tryProb_catchZero(prob_cng2lem_linear, '5_sp^' + node2.lemma);
     
     # L -> 28_sg -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '28_sg')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '28_sg', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[368] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^28_sg') * tryProb_catchZero(prob_cng2cng_linear, '28_sg^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 28_sg -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '28_sg')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '28_sg', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[369] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^28_sg') * tryProb_catchZero(prob_cng2cng_linear, '28_sg^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 28_sg -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '28_sg')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '28_sg', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[370] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^28_sg') * tryProb_catchZero(prob_cng2cng_linear, '28_sg^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 28_sg -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '28_sg')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '28_sg', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[371] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^28_sg') * tryProb_catchZero(prob_cng2cng_linear, '28_sg^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> 28_sg -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '28_sg')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '28_sg', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[372] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^28_sg') * tryProb_catchZero(prob_cng2cng_linear, '28_sg^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> 28_sg -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '28_sg')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '28_sg', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[373] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^28_sg') * tryProb_catchZero(prob_cng2cng_linear, '28_sg^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> 28_sg -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '28_sg')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '28_sg', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[374] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^28_sg') * tryProb_catchZero(prob_cng2cng_linear, '28_sg^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> 28_sg -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '28_sg')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '28_sg', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[375] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^28_sg') * tryProb_catchZero(prob_cng2cng_linear, '28_sg^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 28_sg -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '28_sg')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '28_sg', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[376] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^28_sg') * tryProb_catchZero(prob_cng2cng_linear, '28_sg^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> 28_sg -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '28_sg')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '28_sg', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[377] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^28_sg') * tryProb_catchZero(prob_cng2cng_linear, '28_sg^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 28_sg -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '28_sg')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '28_sg', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[378] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^28_sg') * tryProb_catchZero(prob_cng2cng_linear, '28_sg^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> 28_sg -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '28_sg')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '28_sg', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[379] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^28_sg') * tryProb_catchZero(prob_cng2cng_linear, '28_sg^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> 28_sg -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '28_sg')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '28_sg', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[380] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^28_sg') * tryProb_catchZero(prob_cng2cng_linear, '28_sg^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 148 -> 5_sp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '148')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '148', '5_sp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '5_sp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[381] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^148') * tryProb_catchZero(prob_cng2cng_linear, '148^5_sp') * tryProb_catchZero(prob_cng2lem_linear, '5_sp^' + node2.lemma);
     
     # L -> 148 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '148')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '148', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[382] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^148') * tryProb_catchZero(prob_cng2cng_linear, '148^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 148 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '148')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '148', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[383] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^148') * tryProb_catchZero(prob_cng2cng_linear, '148^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 148 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '148')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '148', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[384] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^148') * tryProb_catchZero(prob_cng2cng_linear, '148^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 148 -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '148')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '148', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[385] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^148') * tryProb_catchZero(prob_cng2cng_linear, '148^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> 148 -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '148')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '148', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[386] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^148') * tryProb_catchZero(prob_cng2cng_linear, '148^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> 148 -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '148')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '148', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[387] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^148') * tryProb_catchZero(prob_cng2cng_linear, '148^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> 148 -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '148')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '148', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[388] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^148') * tryProb_catchZero(prob_cng2cng_linear, '148^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> 148 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '148')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '148', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[389] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^148') * tryProb_catchZero(prob_cng2cng_linear, '148^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 148 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '148')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '148', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[390] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^148') * tryProb_catchZero(prob_cng2cng_linear, '148^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> 148 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '148')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '148', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[391] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^148') * tryProb_catchZero(prob_cng2cng_linear, '148^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 148 -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '148')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '148', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[392] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^148') * tryProb_catchZero(prob_cng2cng_linear, '148^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> 148 -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '148')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '148', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[393] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^148') * tryProb_catchZero(prob_cng2cng_linear, '148^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> 148 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '148')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '148', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[394] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^148') * tryProb_catchZero(prob_cng2cng_linear, '148^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 5_sg -> -90 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_sg')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_sg', '-90')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-90', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[395] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_sg') * tryProb_catchZero(prob_cng2cng_linear, '5_sg^-90') * tryProb_catchZero(prob_cng2lem_linear, '-90^' + node2.lemma);
     
     # L -> 5_sg -> -57 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_sg')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_sg', '-57')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-57', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[396] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_sg') * tryProb_catchZero(prob_cng2cng_linear, '5_sg^-57') * tryProb_catchZero(prob_cng2lem_linear, '-57^' + node2.lemma);
     
     # L -> 5_sg -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_sg')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_sg', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[397] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_sg') * tryProb_catchZero(prob_cng2cng_linear, '5_sg^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 5_sg -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_sg')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_sg', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[398] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_sg') * tryProb_catchZero(prob_cng2cng_linear, '5_sg^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> 5_sg -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_sg')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_sg', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[399] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_sg') * tryProb_catchZero(prob_cng2cng_linear, '5_sg^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 5_sg -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_sg')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_sg', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[400] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_sg') * tryProb_catchZero(prob_cng2cng_linear, '5_sg^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> 153 -> 5_sp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', '5_sp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '5_sp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[401] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^5_sp') * tryProb_catchZero(prob_cng2lem_linear, '5_sp^' + node2.lemma);
     
     # L -> 153 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[402] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 153 -> -151 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', '-151')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-151', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[403] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^-151') * tryProb_catchZero(prob_cng2lem_linear, '-151^' + node2.lemma);
     
     # L -> 153 -> -90 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', '-90')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-90', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[404] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^-90') * tryProb_catchZero(prob_cng2lem_linear, '-90^' + node2.lemma);
     
     # L -> 153 -> -57 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', '-57')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-57', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[405] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^-57') * tryProb_catchZero(prob_cng2lem_linear, '-57^' + node2.lemma);
     
     # L -> 153 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[406] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 153 -> 169 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', '169')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '169', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[407] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^169') * tryProb_catchZero(prob_cng2lem_linear, '169^' + node2.lemma);
     
     # L -> 153 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[408] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 153 -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[409] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> 153 -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[410] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> 153 -> 135 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', '135')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '135', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[411] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^135') * tryProb_catchZero(prob_cng2lem_linear, '135^' + node2.lemma);
     
     # L -> 153 -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[412] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> 153 -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[413] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> 153 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[414] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 153 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[415] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> 153 -> 89 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', '89')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '89', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[416] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^89') * tryProb_catchZero(prob_cng2lem_linear, '89^' + node2.lemma);
     
     # L -> 153 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[417] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 153 -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[418] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> 153 -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[419] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> 153 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[420] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> -30 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-30')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-30', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[421] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-30') * tryProb_catchZero(prob_cng2cng_linear, '-30^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 11_sp -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '11_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '11_sp', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[422] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^11_sp') * tryProb_catchZero(prob_cng2cng_linear, '11_sp^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 11_sp -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '11_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '11_sp', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[423] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^11_sp') * tryProb_catchZero(prob_cng2cng_linear, '11_sp^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 11_sp -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '11_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '11_sp', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[424] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^11_sp') * tryProb_catchZero(prob_cng2cng_linear, '11_sp^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 11_sp -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '11_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '11_sp', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[425] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^11_sp') * tryProb_catchZero(prob_cng2cng_linear, '11_sp^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> 11_sp -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '11_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '11_sp', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[426] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^11_sp') * tryProb_catchZero(prob_cng2cng_linear, '11_sp^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> 11_sp -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '11_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '11_sp', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[427] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^11_sp') * tryProb_catchZero(prob_cng2cng_linear, '11_sp^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> 11_sp -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '11_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '11_sp', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[428] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^11_sp') * tryProb_catchZero(prob_cng2cng_linear, '11_sp^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 11_sp -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '11_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '11_sp', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[429] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^11_sp') * tryProb_catchZero(prob_cng2cng_linear, '11_sp^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> 11_sp -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '11_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '11_sp', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[430] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^11_sp') * tryProb_catchZero(prob_cng2cng_linear, '11_sp^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 11_sp -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '11_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '11_sp', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[431] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^11_sp') * tryProb_catchZero(prob_cng2cng_linear, '11_sp^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> 11_sp -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '11_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '11_sp', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[432] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^11_sp') * tryProb_catchZero(prob_cng2cng_linear, '11_sp^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 30_sp -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '30_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '30_sp', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[433] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^30_sp') * tryProb_catchZero(prob_cng2cng_linear, '30_sp^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 30_sp -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '30_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '30_sp', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[434] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^30_sp') * tryProb_catchZero(prob_cng2cng_linear, '30_sp^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 30_sp -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '30_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '30_sp', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[435] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^30_sp') * tryProb_catchZero(prob_cng2cng_linear, '30_sp^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> 30_sp -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '30_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '30_sp', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[436] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^30_sp') * tryProb_catchZero(prob_cng2cng_linear, '30_sp^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> 30_sp -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '30_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '30_sp', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[437] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^30_sp') * tryProb_catchZero(prob_cng2cng_linear, '30_sp^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 30_sp -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '30_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '30_sp', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[438] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^30_sp') * tryProb_catchZero(prob_cng2cng_linear, '30_sp^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 135 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '135')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '135', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[439] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^135') * tryProb_catchZero(prob_cng2cng_linear, '135^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 135 -> -151 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '135')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '135', '-151')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-151', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[440] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^135') * tryProb_catchZero(prob_cng2cng_linear, '135^-151') * tryProb_catchZero(prob_cng2lem_linear, '-151^' + node2.lemma);
     
     # L -> 135 -> -90 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '135')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '135', '-90')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-90', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[441] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^135') * tryProb_catchZero(prob_cng2cng_linear, '135^-90') * tryProb_catchZero(prob_cng2lem_linear, '-90^' + node2.lemma);
     
     # L -> 135 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '135')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '135', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[442] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^135') * tryProb_catchZero(prob_cng2cng_linear, '135^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 135 -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '135')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '135', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[443] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^135') * tryProb_catchZero(prob_cng2cng_linear, '135^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> 135 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '135')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '135', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[444] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^135') * tryProb_catchZero(prob_cng2cng_linear, '135^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 135 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '135')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '135', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[445] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^135') * tryProb_catchZero(prob_cng2cng_linear, '135^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> 135 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '135')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '135', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[446] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^135') * tryProb_catchZero(prob_cng2cng_linear, '135^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> -86 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-86')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-86', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[447] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-86') * tryProb_catchZero(prob_cng2cng_linear, '-86^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> -86 -> -90 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-86')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-86', '-90')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-90', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[448] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-86') * tryProb_catchZero(prob_cng2cng_linear, '-86^-90') * tryProb_catchZero(prob_cng2lem_linear, '-90^' + node2.lemma);
     
     # L -> -86 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-86')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-86', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[449] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-86') * tryProb_catchZero(prob_cng2cng_linear, '-86^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> -86 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-86')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-86', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[450] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-86') * tryProb_catchZero(prob_cng2cng_linear, '-86^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> -86 -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-86')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-86', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[451] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-86') * tryProb_catchZero(prob_cng2cng_linear, '-86^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> -86 -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-86')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-86', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[452] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-86') * tryProb_catchZero(prob_cng2cng_linear, '-86^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> -86 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-86')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-86', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[453] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-86') * tryProb_catchZero(prob_cng2cng_linear, '-86^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> -86 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-86')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-86', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[454] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-86') * tryProb_catchZero(prob_cng2cng_linear, '-86^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> -86 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-86')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-86', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[455] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-86') * tryProb_catchZero(prob_cng2cng_linear, '-86^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> -86 -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-86')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-86', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[456] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-86') * tryProb_catchZero(prob_cng2cng_linear, '-86^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> -86 -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-86')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-86', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[457] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-86') * tryProb_catchZero(prob_cng2cng_linear, '-86^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> -86 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-86')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-86', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[458] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-86') * tryProb_catchZero(prob_cng2cng_linear, '-86^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 7_fp -> 5_sp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '7_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '7_fp', '5_sp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '5_sp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[459] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^7_fp') * tryProb_catchZero(prob_cng2cng_linear, '7_fp^5_sp') * tryProb_catchZero(prob_cng2lem_linear, '5_sp^' + node2.lemma);
     
     # L -> 7_fp -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '7_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '7_fp', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[460] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^7_fp') * tryProb_catchZero(prob_cng2cng_linear, '7_fp^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 7_fp -> -57 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '7_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '7_fp', '-57')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-57', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[461] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^7_fp') * tryProb_catchZero(prob_cng2cng_linear, '7_fp^-57') * tryProb_catchZero(prob_cng2lem_linear, '-57^' + node2.lemma);
     
     # L -> 7_fp -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '7_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '7_fp', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[462] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^7_fp') * tryProb_catchZero(prob_cng2cng_linear, '7_fp^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 7_fp -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '7_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '7_fp', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[463] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^7_fp') * tryProb_catchZero(prob_cng2cng_linear, '7_fp^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 7_fp -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '7_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '7_fp', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[464] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^7_fp') * tryProb_catchZero(prob_cng2cng_linear, '7_fp^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> 7_fp -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '7_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '7_fp', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[465] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^7_fp') * tryProb_catchZero(prob_cng2cng_linear, '7_fp^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> 7_fp -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '7_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '7_fp', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[466] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^7_fp') * tryProb_catchZero(prob_cng2cng_linear, '7_fp^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> 7_fp -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '7_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '7_fp', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[467] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^7_fp') * tryProb_catchZero(prob_cng2cng_linear, '7_fp^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 7_fp -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '7_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '7_fp', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[468] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^7_fp') * tryProb_catchZero(prob_cng2cng_linear, '7_fp^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> 7_fp -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '7_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '7_fp', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[469] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^7_fp') * tryProb_catchZero(prob_cng2cng_linear, '7_fp^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 7_fp -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '7_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '7_fp', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[470] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^7_fp') * tryProb_catchZero(prob_cng2cng_linear, '7_fp^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> 7_fp -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '7_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '7_fp', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[471] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^7_fp') * tryProb_catchZero(prob_cng2cng_linear, '7_fp^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 111 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '111')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '111', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[472] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^111') * tryProb_catchZero(prob_cng2cng_linear, '111^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 111 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '111')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '111', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[473] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^111') * tryProb_catchZero(prob_cng2cng_linear, '111^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 111 -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '111')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '111', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[474] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^111') * tryProb_catchZero(prob_cng2cng_linear, '111^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> 111 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '111')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '111', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[475] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^111') * tryProb_catchZero(prob_cng2cng_linear, '111^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> 111 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '111')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '111', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[476] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^111') * tryProb_catchZero(prob_cng2cng_linear, '111^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> -92 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-92')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-92', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[477] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-92') * tryProb_catchZero(prob_cng2cng_linear, '-92^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> -92 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-92')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-92', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[478] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-92') * tryProb_catchZero(prob_cng2cng_linear, '-92^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 177 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '177')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '177', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[479] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^177') * tryProb_catchZero(prob_cng2cng_linear, '177^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 177 -> -90 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '177')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '177', '-90')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-90', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[480] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^177') * tryProb_catchZero(prob_cng2cng_linear, '177^-90') * tryProb_catchZero(prob_cng2lem_linear, '-90^' + node2.lemma);
     
     # L -> 177 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '177')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '177', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[481] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^177') * tryProb_catchZero(prob_cng2cng_linear, '177^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 177 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '177')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '177', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[482] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^177') * tryProb_catchZero(prob_cng2cng_linear, '177^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 177 -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '177')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '177', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[483] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^177') * tryProb_catchZero(prob_cng2cng_linear, '177^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> 177 -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '177')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '177', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[484] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^177') * tryProb_catchZero(prob_cng2cng_linear, '177^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> 177 -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '177')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '177', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[485] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^177') * tryProb_catchZero(prob_cng2cng_linear, '177^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> 177 -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '177')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '177', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[486] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^177') * tryProb_catchZero(prob_cng2cng_linear, '177^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> 177 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '177')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '177', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[487] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^177') * tryProb_catchZero(prob_cng2cng_linear, '177^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 177 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '177')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '177', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[488] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^177') * tryProb_catchZero(prob_cng2cng_linear, '177^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> 177 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '177')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '177', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[489] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^177') * tryProb_catchZero(prob_cng2cng_linear, '177^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 177 -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '177')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '177', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[490] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^177') * tryProb_catchZero(prob_cng2cng_linear, '177^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> 177 -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '177')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '177', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[491] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^177') * tryProb_catchZero(prob_cng2cng_linear, '177^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> 177 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '177')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '177', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[492] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^177') * tryProb_catchZero(prob_cng2cng_linear, '177^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> neutr -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'neutr')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'neutr', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[493] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^neutr') * tryProb_catchZero(prob_cng2cng_linear, 'neutr^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> neutr -> -151 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'neutr')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'neutr', '-151')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-151', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[494] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^neutr') * tryProb_catchZero(prob_cng2cng_linear, 'neutr^-151') * tryProb_catchZero(prob_cng2lem_linear, '-151^' + node2.lemma);
     
     # L -> neutr -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'neutr')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'neutr', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[495] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^neutr') * tryProb_catchZero(prob_cng2cng_linear, 'neutr^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> neutr -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'neutr')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'neutr', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[496] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^neutr') * tryProb_catchZero(prob_cng2cng_linear, 'neutr^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> neutr -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'neutr')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'neutr', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[497] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^neutr') * tryProb_catchZero(prob_cng2cng_linear, 'neutr^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> neutr -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'neutr')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'neutr', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[498] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^neutr') * tryProb_catchZero(prob_cng2cng_linear, 'neutr^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> neutr -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'neutr')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'neutr', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[499] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^neutr') * tryProb_catchZero(prob_cng2cng_linear, 'neutr^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> neutr -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'neutr')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'neutr', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[500] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^neutr') * tryProb_catchZero(prob_cng2cng_linear, 'neutr^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> neutr -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'neutr')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'neutr', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[501] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^neutr') * tryProb_catchZero(prob_cng2cng_linear, 'neutr^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> neutr -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'neutr')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'neutr', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[502] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^neutr') * tryProb_catchZero(prob_cng2cng_linear, 'neutr^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 59 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '59')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '59', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[503] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^59') * tryProb_catchZero(prob_cng2cng_linear, '59^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 59 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '59')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '59', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[504] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^59') * tryProb_catchZero(prob_cng2cng_linear, '59^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 59 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '59')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '59', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[505] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^59') * tryProb_catchZero(prob_cng2cng_linear, '59^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 59 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '59')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '59', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[506] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^59') * tryProb_catchZero(prob_cng2cng_linear, '59^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 29 -> 5_sp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '29')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '29', '5_sp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '5_sp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[507] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^29') * tryProb_catchZero(prob_cng2cng_linear, '29^5_sp') * tryProb_catchZero(prob_cng2lem_linear, '5_sp^' + node2.lemma);
     
     # L -> 29 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '29')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '29', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[508] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^29') * tryProb_catchZero(prob_cng2cng_linear, '29^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 29 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '29')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '29', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[509] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^29') * tryProb_catchZero(prob_cng2cng_linear, '29^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 29 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '29')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '29', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[510] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^29') * tryProb_catchZero(prob_cng2cng_linear, '29^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 29 -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '29')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '29', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[511] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^29') * tryProb_catchZero(prob_cng2cng_linear, '29^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> 29 -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '29')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '29', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[512] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^29') * tryProb_catchZero(prob_cng2cng_linear, '29^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> 29 -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '29')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '29', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[513] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^29') * tryProb_catchZero(prob_cng2cng_linear, '29^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> 29 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '29')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '29', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[514] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^29') * tryProb_catchZero(prob_cng2cng_linear, '29^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 29 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '29')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '29', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[515] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^29') * tryProb_catchZero(prob_cng2cng_linear, '29^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> 29 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '29')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '29', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[516] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^29') * tryProb_catchZero(prob_cng2cng_linear, '29^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 29 -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '29')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '29', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[517] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^29') * tryProb_catchZero(prob_cng2cng_linear, '29^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> 29 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '29')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '29', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[518] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^29') * tryProb_catchZero(prob_cng2cng_linear, '29^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 156 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '156')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '156', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[519] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^156') * tryProb_catchZero(prob_cng2cng_linear, '156^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 156 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '156')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '156', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[520] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^156') * tryProb_catchZero(prob_cng2cng_linear, '156^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> -153 -> 5_sp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-153', '5_sp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '5_sp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[521] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-153') * tryProb_catchZero(prob_cng2cng_linear, '-153^5_sp') * tryProb_catchZero(prob_cng2lem_linear, '5_sp^' + node2.lemma);
     
     # L -> -153 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-153', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[522] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-153') * tryProb_catchZero(prob_cng2cng_linear, '-153^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> -153 -> -151 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-153', '-151')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-151', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[523] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-153') * tryProb_catchZero(prob_cng2cng_linear, '-153^-151') * tryProb_catchZero(prob_cng2lem_linear, '-151^' + node2.lemma);
     
     # L -> -153 -> -90 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-153', '-90')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-90', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[524] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-153') * tryProb_catchZero(prob_cng2cng_linear, '-153^-90') * tryProb_catchZero(prob_cng2lem_linear, '-90^' + node2.lemma);
     
     # L -> -153 -> -57 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-153', '-57')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-57', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[525] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-153') * tryProb_catchZero(prob_cng2cng_linear, '-153^-57') * tryProb_catchZero(prob_cng2lem_linear, '-57^' + node2.lemma);
     
     # L -> -153 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-153', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[526] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-153') * tryProb_catchZero(prob_cng2cng_linear, '-153^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> -153 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-153', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[527] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-153') * tryProb_catchZero(prob_cng2cng_linear, '-153^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> -153 -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-153', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[528] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-153') * tryProb_catchZero(prob_cng2cng_linear, '-153^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> -153 -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-153', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[529] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-153') * tryProb_catchZero(prob_cng2cng_linear, '-153^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> -153 -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-153', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[530] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-153') * tryProb_catchZero(prob_cng2cng_linear, '-153^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> -153 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-153', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[531] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-153') * tryProb_catchZero(prob_cng2cng_linear, '-153^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> -153 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-153', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[532] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-153') * tryProb_catchZero(prob_cng2cng_linear, '-153^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> -153 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-153', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[533] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-153') * tryProb_catchZero(prob_cng2cng_linear, '-153^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> -153 -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-153', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[534] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-153') * tryProb_catchZero(prob_cng2cng_linear, '-153^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> -153 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-153', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[535] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-153') * tryProb_catchZero(prob_cng2cng_linear, '-153^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 8_tp -> 5_sp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_tp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_tp', '5_sp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '5_sp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[536] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_tp') * tryProb_catchZero(prob_cng2cng_linear, '8_tp^5_sp') * tryProb_catchZero(prob_cng2lem_linear, '5_sp^' + node2.lemma);
     
     # L -> 8_tp -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_tp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_tp', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[537] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_tp') * tryProb_catchZero(prob_cng2cng_linear, '8_tp^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 8_tp -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_tp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_tp', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[538] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_tp') * tryProb_catchZero(prob_cng2cng_linear, '8_tp^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 8_tp -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_tp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_tp', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[539] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_tp') * tryProb_catchZero(prob_cng2cng_linear, '8_tp^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 8_tp -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_tp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_tp', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[540] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_tp') * tryProb_catchZero(prob_cng2cng_linear, '8_tp^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> 8_tp -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_tp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_tp', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[541] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_tp') * tryProb_catchZero(prob_cng2cng_linear, '8_tp^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> 8_tp -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_tp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_tp', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[542] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_tp') * tryProb_catchZero(prob_cng2cng_linear, '8_tp^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> 8_tp -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_tp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_tp', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[543] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_tp') * tryProb_catchZero(prob_cng2cng_linear, '8_tp^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 8_tp -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_tp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_tp', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[544] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_tp') * tryProb_catchZero(prob_cng2cng_linear, '8_tp^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> 8_tp -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_tp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_tp', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[545] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_tp') * tryProb_catchZero(prob_cng2cng_linear, '8_tp^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 8_tp -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_tp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_tp', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[546] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_tp') * tryProb_catchZero(prob_cng2cng_linear, '8_tp^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> 8_tp -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_tp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_tp', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[547] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_tp') * tryProb_catchZero(prob_cng2cng_linear, '8_tp^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 4_tp -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '4_tp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '4_tp', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[548] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^4_tp') * tryProb_catchZero(prob_cng2cng_linear, '4_tp^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 28 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '28')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '28', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[549] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^28') * tryProb_catchZero(prob_cng2cng_linear, '28^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 28 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '28')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '28', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[550] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^28') * tryProb_catchZero(prob_cng2cng_linear, '28^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 28 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '28')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '28', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[551] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^28') * tryProb_catchZero(prob_cng2cng_linear, '28^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 28 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '28')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '28', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[552] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^28') * tryProb_catchZero(prob_cng2cng_linear, '28^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> 28 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '28')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '28', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[553] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^28') * tryProb_catchZero(prob_cng2cng_linear, '28^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 28 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '28')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '28', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[554] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^28') * tryProb_catchZero(prob_cng2cng_linear, '28^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> -24 -> 5_sp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-24')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-24', '5_sp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '5_sp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[555] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-24') * tryProb_catchZero(prob_cng2cng_linear, '-24^5_sp') * tryProb_catchZero(prob_cng2lem_linear, '5_sp^' + node2.lemma);
     
     # L -> -24 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-24')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-24', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[556] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-24') * tryProb_catchZero(prob_cng2cng_linear, '-24^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> -24 -> -151 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-24')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-24', '-151')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-151', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[557] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-24') * tryProb_catchZero(prob_cng2cng_linear, '-24^-151') * tryProb_catchZero(prob_cng2lem_linear, '-151^' + node2.lemma);
     
     # L -> -24 -> -90 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-24')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-24', '-90')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-90', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[558] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-24') * tryProb_catchZero(prob_cng2cng_linear, '-24^-90') * tryProb_catchZero(prob_cng2lem_linear, '-90^' + node2.lemma);
     
     # L -> -24 -> -57 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-24')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-24', '-57')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-57', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[559] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-24') * tryProb_catchZero(prob_cng2cng_linear, '-24^-57') * tryProb_catchZero(prob_cng2lem_linear, '-57^' + node2.lemma);
     
     # L -> -24 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-24')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-24', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[560] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-24') * tryProb_catchZero(prob_cng2cng_linear, '-24^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> -24 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-24')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-24', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[561] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-24') * tryProb_catchZero(prob_cng2cng_linear, '-24^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> -24 -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-24')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-24', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[562] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-24') * tryProb_catchZero(prob_cng2cng_linear, '-24^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> -24 -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-24')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-24', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[563] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-24') * tryProb_catchZero(prob_cng2cng_linear, '-24^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> -24 -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-24')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-24', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[564] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-24') * tryProb_catchZero(prob_cng2cng_linear, '-24^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> -24 -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-24')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-24', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[565] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-24') * tryProb_catchZero(prob_cng2cng_linear, '-24^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> -24 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-24')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-24', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[566] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-24') * tryProb_catchZero(prob_cng2cng_linear, '-24^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> -24 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-24')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-24', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[567] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-24') * tryProb_catchZero(prob_cng2cng_linear, '-24^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> -24 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-24')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-24', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[568] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-24') * tryProb_catchZero(prob_cng2cng_linear, '-24^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> -24 -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-24')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-24', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[569] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-24') * tryProb_catchZero(prob_cng2cng_linear, '-24^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> -24 -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-24')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-24', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[570] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-24') * tryProb_catchZero(prob_cng2cng_linear, '-24^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> -24 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-24')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-24', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[571] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-24') * tryProb_catchZero(prob_cng2cng_linear, '-24^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 137 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '137')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '137', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[572] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^137') * tryProb_catchZero(prob_cng2cng_linear, '137^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 137 -> -151 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '137')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '137', '-151')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-151', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[573] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^137') * tryProb_catchZero(prob_cng2cng_linear, '137^-151') * tryProb_catchZero(prob_cng2lem_linear, '-151^' + node2.lemma);
     
     # L -> 137 -> -90 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '137')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '137', '-90')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-90', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[574] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^137') * tryProb_catchZero(prob_cng2cng_linear, '137^-90') * tryProb_catchZero(prob_cng2lem_linear, '-90^' + node2.lemma);
     
     # L -> 137 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '137')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '137', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[575] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^137') * tryProb_catchZero(prob_cng2cng_linear, '137^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 137 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '137')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '137', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[576] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^137') * tryProb_catchZero(prob_cng2cng_linear, '137^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 137 -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '137')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '137', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[577] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^137') * tryProb_catchZero(prob_cng2cng_linear, '137^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> 137 -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '137')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '137', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[578] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^137') * tryProb_catchZero(prob_cng2cng_linear, '137^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> 137 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '137')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '137', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[579] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^137') * tryProb_catchZero(prob_cng2cng_linear, '137^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 137 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '137')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '137', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[580] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^137') * tryProb_catchZero(prob_cng2cng_linear, '137^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> 137 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '137')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '137', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[581] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^137') * tryProb_catchZero(prob_cng2cng_linear, '137^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 137 -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '137')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '137', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[582] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^137') * tryProb_catchZero(prob_cng2cng_linear, '137^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> 137 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '137')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '137', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[583] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^137') * tryProb_catchZero(prob_cng2cng_linear, '137^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> -112 -> 5_sp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-112')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-112', '5_sp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '5_sp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[584] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-112') * tryProb_catchZero(prob_cng2cng_linear, '-112^5_sp') * tryProb_catchZero(prob_cng2lem_linear, '5_sp^' + node2.lemma);
     
     # L -> -112 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-112')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-112', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[585] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-112') * tryProb_catchZero(prob_cng2cng_linear, '-112^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> -112 -> -151 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-112')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-112', '-151')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-151', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[586] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-112') * tryProb_catchZero(prob_cng2cng_linear, '-112^-151') * tryProb_catchZero(prob_cng2lem_linear, '-151^' + node2.lemma);
     
     # L -> -112 -> -57 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-112')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-112', '-57')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-57', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[587] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-112') * tryProb_catchZero(prob_cng2cng_linear, '-112^-57') * tryProb_catchZero(prob_cng2lem_linear, '-57^' + node2.lemma);
     
     # L -> -112 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-112')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-112', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[588] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-112') * tryProb_catchZero(prob_cng2cng_linear, '-112^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> -112 -> 169 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-112')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-112', '169')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '169', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[589] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-112') * tryProb_catchZero(prob_cng2cng_linear, '-112^169') * tryProb_catchZero(prob_cng2lem_linear, '169^' + node2.lemma);
     
     # L -> -112 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-112')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-112', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[590] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-112') * tryProb_catchZero(prob_cng2cng_linear, '-112^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> -112 -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-112')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-112', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[591] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-112') * tryProb_catchZero(prob_cng2cng_linear, '-112^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> -112 -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-112')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-112', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[592] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-112') * tryProb_catchZero(prob_cng2cng_linear, '-112^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> -112 -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-112')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-112', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[593] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-112') * tryProb_catchZero(prob_cng2cng_linear, '-112^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> -112 -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-112')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-112', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[594] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-112') * tryProb_catchZero(prob_cng2cng_linear, '-112^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> -112 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-112')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-112', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[595] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-112') * tryProb_catchZero(prob_cng2cng_linear, '-112^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> -112 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-112')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-112', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[596] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-112') * tryProb_catchZero(prob_cng2cng_linear, '-112^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> -112 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-112')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-112', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[597] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-112') * tryProb_catchZero(prob_cng2cng_linear, '-112^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> -112 -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-112')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-112', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[598] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-112') * tryProb_catchZero(prob_cng2cng_linear, '-112^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> -112 -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-112')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-112', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[599] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-112') * tryProb_catchZero(prob_cng2cng_linear, '-112^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> -112 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-112')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-112', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[600] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-112') * tryProb_catchZero(prob_cng2cng_linear, '-112^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 89 -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '89')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '89', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[601] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^89') * tryProb_catchZero(prob_cng2cng_linear, '89^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> 89 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '89')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '89', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[602] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^89') * tryProb_catchZero(prob_cng2cng_linear, '89^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> -161 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-161')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-161', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[603] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-161') * tryProb_catchZero(prob_cng2cng_linear, '-161^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> -161 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-161')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-161', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[604] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-161') * tryProb_catchZero(prob_cng2cng_linear, '-161^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> -161 -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-161')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-161', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[605] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-161') * tryProb_catchZero(prob_cng2cng_linear, '-161^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> -161 -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-161')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-161', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[606] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-161') * tryProb_catchZero(prob_cng2cng_linear, '-161^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> -161 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-161')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-161', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[607] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-161') * tryProb_catchZero(prob_cng2cng_linear, '-161^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> -161 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-161')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-161', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[608] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-161') * tryProb_catchZero(prob_cng2cng_linear, '-161^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> -161 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-161')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-161', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[609] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-161') * tryProb_catchZero(prob_cng2cng_linear, '-161^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> -161 -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-161')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-161', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[610] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-161') * tryProb_catchZero(prob_cng2cng_linear, '-161^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> -161 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-161')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-161', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[611] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-161') * tryProb_catchZero(prob_cng2cng_linear, '-161^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> -96 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-96')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-96', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[612] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-96') * tryProb_catchZero(prob_cng2cng_linear, '-96^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> -96 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-96')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-96', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[613] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-96') * tryProb_catchZero(prob_cng2cng_linear, '-96^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> -96 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-96')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-96', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[614] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-96') * tryProb_catchZero(prob_cng2cng_linear, '-96^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> -96 -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-96')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-96', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[615] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-96') * tryProb_catchZero(prob_cng2cng_linear, '-96^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> -96 -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-96')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-96', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[616] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-96') * tryProb_catchZero(prob_cng2cng_linear, '-96^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> -96 -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-96')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-96', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[617] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-96') * tryProb_catchZero(prob_cng2cng_linear, '-96^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> -96 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-96')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-96', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[618] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-96') * tryProb_catchZero(prob_cng2cng_linear, '-96^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> -96 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-96')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-96', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[619] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-96') * tryProb_catchZero(prob_cng2cng_linear, '-96^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> -96 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-96')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-96', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[620] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-96') * tryProb_catchZero(prob_cng2cng_linear, '-96^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> -96 -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-96')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-96', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[621] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-96') * tryProb_catchZero(prob_cng2cng_linear, '-96^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> -96 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-96')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-96', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[622] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-96') * tryProb_catchZero(prob_cng2cng_linear, '-96^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 174 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '174')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '174', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[623] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^174') * tryProb_catchZero(prob_cng2cng_linear, '174^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 174 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '174')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '174', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[624] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^174') * tryProb_catchZero(prob_cng2cng_linear, '174^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 174 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '174')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '174', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[625] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^174') * tryProb_catchZero(prob_cng2cng_linear, '174^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 162 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '162')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '162', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[626] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^162') * tryProb_catchZero(prob_cng2cng_linear, '162^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 162 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '162')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '162', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[627] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^162') * tryProb_catchZero(prob_cng2cng_linear, '162^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 162 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '162')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '162', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[628] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^162') * tryProb_catchZero(prob_cng2cng_linear, '162^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 162 -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '162')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '162', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[629] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^162') * tryProb_catchZero(prob_cng2cng_linear, '162^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> 162 -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '162')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '162', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[630] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^162') * tryProb_catchZero(prob_cng2cng_linear, '162^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> 162 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '162')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '162', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[631] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^162') * tryProb_catchZero(prob_cng2cng_linear, '162^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 162 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '162')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '162', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[632] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^162') * tryProb_catchZero(prob_cng2cng_linear, '162^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 162 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '162')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '162', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[633] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^162') * tryProb_catchZero(prob_cng2cng_linear, '162^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> gen. pl. -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'gen. pl.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'gen. pl.', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[634] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^gen. pl.') * tryProb_catchZero(prob_cng2cng_linear, 'gen. pl.^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> gen. pl. -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'gen. pl.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'gen. pl.', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[635] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^gen. pl.') * tryProb_catchZero(prob_cng2cng_linear, 'gen. pl.^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> pl_tp -> 5_sp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'pl_tp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'pl_tp', '5_sp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '5_sp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[636] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^pl_tp') * tryProb_catchZero(prob_cng2cng_linear, 'pl_tp^5_sp') * tryProb_catchZero(prob_cng2lem_linear, '5_sp^' + node2.lemma);
     
     # L -> pl_tp -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'pl_tp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'pl_tp', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[637] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^pl_tp') * tryProb_catchZero(prob_cng2cng_linear, 'pl_tp^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> pl_tp -> -57 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'pl_tp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'pl_tp', '-57')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-57', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[638] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^pl_tp') * tryProb_catchZero(prob_cng2cng_linear, 'pl_tp^-57') * tryProb_catchZero(prob_cng2lem_linear, '-57^' + node2.lemma);
     
     # L -> pl_tp -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'pl_tp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'pl_tp', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[639] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^pl_tp') * tryProb_catchZero(prob_cng2cng_linear, 'pl_tp^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> pl_tp -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'pl_tp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'pl_tp', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[640] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^pl_tp') * tryProb_catchZero(prob_cng2cng_linear, 'pl_tp^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> pl_tp -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'pl_tp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'pl_tp', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[641] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^pl_tp') * tryProb_catchZero(prob_cng2cng_linear, 'pl_tp^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> pl_tp -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'pl_tp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'pl_tp', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[642] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^pl_tp') * tryProb_catchZero(prob_cng2cng_linear, 'pl_tp^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> pl_tp -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'pl_tp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'pl_tp', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[643] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^pl_tp') * tryProb_catchZero(prob_cng2cng_linear, 'pl_tp^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> pl_tp -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'pl_tp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'pl_tp', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[644] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^pl_tp') * tryProb_catchZero(prob_cng2cng_linear, 'pl_tp^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> pl_tp -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'pl_tp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'pl_tp', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[645] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^pl_tp') * tryProb_catchZero(prob_cng2cng_linear, 'pl_tp^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> pl_tp -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'pl_tp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'pl_tp', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[646] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^pl_tp') * tryProb_catchZero(prob_cng2cng_linear, 'pl_tp^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> pl_tp -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'pl_tp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'pl_tp', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[647] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^pl_tp') * tryProb_catchZero(prob_cng2cng_linear, 'pl_tp^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> pl_tp -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'pl_tp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'pl_tp', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[648] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^pl_tp') * tryProb_catchZero(prob_cng2cng_linear, 'pl_tp^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> pl_tp -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'pl_tp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'pl_tp', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[649] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^pl_tp') * tryProb_catchZero(prob_cng2cng_linear, 'pl_tp^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 101 -> 5_sp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '5_sp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '5_sp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[650] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^5_sp') * tryProb_catchZero(prob_cng2lem_linear, '5_sp^' + node2.lemma);
     
     # L -> 101 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[651] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 101 -> -151 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '-151')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-151', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[652] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^-151') * tryProb_catchZero(prob_cng2lem_linear, '-151^' + node2.lemma);
     
     # L -> 101 -> -90 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '-90')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-90', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[653] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^-90') * tryProb_catchZero(prob_cng2lem_linear, '-90^' + node2.lemma);
     
     # L -> 101 -> -57 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '-57')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-57', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[654] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^-57') * tryProb_catchZero(prob_cng2lem_linear, '-57^' + node2.lemma);
     
     # L -> 101 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[655] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 101 -> 169 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '169')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '169', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[656] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^169') * tryProb_catchZero(prob_cng2lem_linear, '169^' + node2.lemma);
     
     # L -> 101 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[657] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 101 -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[658] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> 101 -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[659] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> 101 -> 135 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '135')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '135', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[660] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^135') * tryProb_catchZero(prob_cng2lem_linear, '135^' + node2.lemma);
     
     # L -> 101 -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[661] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> 101 -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[662] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> 101 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[663] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 101 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[664] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> 101 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[665] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 101 -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[666] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> 101 -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[667] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> 101 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[668] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 91 -> 5_sp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '91', '5_sp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '5_sp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[669] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^91') * tryProb_catchZero(prob_cng2cng_linear, '91^5_sp') * tryProb_catchZero(prob_cng2lem_linear, '5_sp^' + node2.lemma);
     
     # L -> 91 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '91', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[670] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^91') * tryProb_catchZero(prob_cng2cng_linear, '91^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 91 -> -151 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '91', '-151')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-151', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[671] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^91') * tryProb_catchZero(prob_cng2cng_linear, '91^-151') * tryProb_catchZero(prob_cng2lem_linear, '-151^' + node2.lemma);
     
     # L -> 91 -> -90 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '91', '-90')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-90', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[672] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^91') * tryProb_catchZero(prob_cng2cng_linear, '91^-90') * tryProb_catchZero(prob_cng2lem_linear, '-90^' + node2.lemma);
     
     # L -> 91 -> -57 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '91', '-57')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-57', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[673] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^91') * tryProb_catchZero(prob_cng2cng_linear, '91^-57') * tryProb_catchZero(prob_cng2lem_linear, '-57^' + node2.lemma);
     
     # L -> 91 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '91', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[674] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^91') * tryProb_catchZero(prob_cng2cng_linear, '91^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 91 -> 169 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '91', '169')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '169', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[675] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^91') * tryProb_catchZero(prob_cng2cng_linear, '91^169') * tryProb_catchZero(prob_cng2lem_linear, '169^' + node2.lemma);
     
     # L -> 91 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '91', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[676] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^91') * tryProb_catchZero(prob_cng2cng_linear, '91^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 91 -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '91', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[677] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^91') * tryProb_catchZero(prob_cng2cng_linear, '91^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> 91 -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '91', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[678] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^91') * tryProb_catchZero(prob_cng2cng_linear, '91^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> 91 -> 135 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '91', '135')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '135', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[679] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^91') * tryProb_catchZero(prob_cng2cng_linear, '91^135') * tryProb_catchZero(prob_cng2lem_linear, '135^' + node2.lemma);
     
     # L -> 91 -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '91', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[680] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^91') * tryProb_catchZero(prob_cng2cng_linear, '91^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> 91 -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '91', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[681] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^91') * tryProb_catchZero(prob_cng2cng_linear, '91^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> 91 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '91', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[682] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^91') * tryProb_catchZero(prob_cng2cng_linear, '91^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 91 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '91', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[683] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^91') * tryProb_catchZero(prob_cng2cng_linear, '91^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> 91 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '91', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[684] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^91') * tryProb_catchZero(prob_cng2cng_linear, '91^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 91 -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '91', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[685] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^91') * tryProb_catchZero(prob_cng2cng_linear, '91^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> 91 -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '91', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[686] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^91') * tryProb_catchZero(prob_cng2cng_linear, '91^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> 91 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '91', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[687] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^91') * tryProb_catchZero(prob_cng2cng_linear, '91^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> -35 -> -90 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-35')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-35', '-90')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-90', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[688] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-35') * tryProb_catchZero(prob_cng2cng_linear, '-35^-90') * tryProb_catchZero(prob_cng2lem_linear, '-90^' + node2.lemma);
     
     # L -> -35 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-35')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-35', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[689] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-35') * tryProb_catchZero(prob_cng2cng_linear, '-35^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> -35 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-35')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-35', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[690] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-35') * tryProb_catchZero(prob_cng2cng_linear, '-35^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 11_fp -> 5_sp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '11_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '11_fp', '5_sp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '5_sp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[691] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^11_fp') * tryProb_catchZero(prob_cng2cng_linear, '11_fp^5_sp') * tryProb_catchZero(prob_cng2lem_linear, '5_sp^' + node2.lemma);
     
     # L -> 11_fp -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '11_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '11_fp', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[692] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^11_fp') * tryProb_catchZero(prob_cng2cng_linear, '11_fp^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 11_fp -> -57 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '11_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '11_fp', '-57')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-57', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[693] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^11_fp') * tryProb_catchZero(prob_cng2cng_linear, '11_fp^-57') * tryProb_catchZero(prob_cng2lem_linear, '-57^' + node2.lemma);
     
     # L -> 11_fp -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '11_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '11_fp', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[694] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^11_fp') * tryProb_catchZero(prob_cng2cng_linear, '11_fp^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 11_fp -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '11_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '11_fp', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[695] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^11_fp') * tryProb_catchZero(prob_cng2cng_linear, '11_fp^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 11_fp -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '11_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '11_fp', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[696] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^11_fp') * tryProb_catchZero(prob_cng2cng_linear, '11_fp^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> 11_fp -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '11_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '11_fp', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[697] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^11_fp') * tryProb_catchZero(prob_cng2cng_linear, '11_fp^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> 11_fp -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '11_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '11_fp', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[698] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^11_fp') * tryProb_catchZero(prob_cng2cng_linear, '11_fp^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> 11_fp -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '11_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '11_fp', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[699] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^11_fp') * tryProb_catchZero(prob_cng2cng_linear, '11_fp^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> 11_fp -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '11_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '11_fp', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[700] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^11_fp') * tryProb_catchZero(prob_cng2cng_linear, '11_fp^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 11_fp -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '11_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '11_fp', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[701] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^11_fp') * tryProb_catchZero(prob_cng2cng_linear, '11_fp^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> 11_fp -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '11_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '11_fp', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[702] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^11_fp') * tryProb_catchZero(prob_cng2cng_linear, '11_fp^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 11_fp -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '11_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '11_fp', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[703] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^11_fp') * tryProb_catchZero(prob_cng2cng_linear, '11_fp^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> 11_fp -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '11_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '11_fp', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[704] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^11_fp') * tryProb_catchZero(prob_cng2cng_linear, '11_fp^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> 11_fp -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '11_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '11_fp', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[705] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^11_fp') * tryProb_catchZero(prob_cng2cng_linear, '11_fp^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 3_du -> 5_sp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_du', '5_sp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '5_sp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[706] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_du') * tryProb_catchZero(prob_cng2cng_linear, '3_du^5_sp') * tryProb_catchZero(prob_cng2lem_linear, '5_sp^' + node2.lemma);
     
     # L -> 3_du -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_du', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[707] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_du') * tryProb_catchZero(prob_cng2cng_linear, '3_du^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 3_du -> -151 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_du', '-151')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-151', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[708] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_du') * tryProb_catchZero(prob_cng2cng_linear, '3_du^-151') * tryProb_catchZero(prob_cng2lem_linear, '-151^' + node2.lemma);
     
     # L -> 3_du -> -90 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_du', '-90')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-90', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[709] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_du') * tryProb_catchZero(prob_cng2cng_linear, '3_du^-90') * tryProb_catchZero(prob_cng2lem_linear, '-90^' + node2.lemma);
     
     # L -> 3_du -> -57 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_du', '-57')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-57', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[710] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_du') * tryProb_catchZero(prob_cng2cng_linear, '3_du^-57') * tryProb_catchZero(prob_cng2lem_linear, '-57^' + node2.lemma);
     
     # L -> 3_du -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_du', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[711] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_du') * tryProb_catchZero(prob_cng2cng_linear, '3_du^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 3_du -> 169 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_du', '169')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '169', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[712] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_du') * tryProb_catchZero(prob_cng2cng_linear, '3_du^169') * tryProb_catchZero(prob_cng2lem_linear, '169^' + node2.lemma);
     
     # L -> 3_du -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_du', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[713] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_du') * tryProb_catchZero(prob_cng2cng_linear, '3_du^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 3_du -> 114 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_du', '114')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '114', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[714] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_du') * tryProb_catchZero(prob_cng2cng_linear, '3_du^114') * tryProb_catchZero(prob_cng2lem_linear, '114^' + node2.lemma);
     
     # L -> 3_du -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_du', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[715] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_du') * tryProb_catchZero(prob_cng2cng_linear, '3_du^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> 3_du -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_du', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[716] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_du') * tryProb_catchZero(prob_cng2cng_linear, '3_du^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> 3_du -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_du', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[717] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_du') * tryProb_catchZero(prob_cng2cng_linear, '3_du^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> 3_du -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_du', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[718] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_du') * tryProb_catchZero(prob_cng2cng_linear, '3_du^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> 3_du -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_du', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[719] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_du') * tryProb_catchZero(prob_cng2cng_linear, '3_du^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 3_du -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_du', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[720] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_du') * tryProb_catchZero(prob_cng2cng_linear, '3_du^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> 3_du -> 89 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_du', '89')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '89', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[721] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_du') * tryProb_catchZero(prob_cng2cng_linear, '3_du^89') * tryProb_catchZero(prob_cng2lem_linear, '89^' + node2.lemma);
     
     # L -> 3_du -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_du', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[722] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_du') * tryProb_catchZero(prob_cng2cng_linear, '3_du^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 3_du -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_du', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[723] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_du') * tryProb_catchZero(prob_cng2cng_linear, '3_du^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> 3_du -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_du', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[724] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_du') * tryProb_catchZero(prob_cng2cng_linear, '3_du^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> 3_du -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_du', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[725] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_du') * tryProb_catchZero(prob_cng2cng_linear, '3_du^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 8_sp -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_sp', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[726] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_sp') * tryProb_catchZero(prob_cng2cng_linear, '8_sp^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 8_sp -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_sp', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[727] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_sp') * tryProb_catchZero(prob_cng2cng_linear, '8_sp^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> -296 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-296')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-296', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[728] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-296') * tryProb_catchZero(prob_cng2cng_linear, '-296^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> -296 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-296')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-296', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[729] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-296') * tryProb_catchZero(prob_cng2cng_linear, '-296^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> -296 -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-296')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-296', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[730] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-296') * tryProb_catchZero(prob_cng2cng_linear, '-296^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> -296 -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-296')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-296', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[731] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-296') * tryProb_catchZero(prob_cng2cng_linear, '-296^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> -296 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-296')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-296', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[732] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-296') * tryProb_catchZero(prob_cng2cng_linear, '-296^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> -296 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-296')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-296', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[733] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-296') * tryProb_catchZero(prob_cng2cng_linear, '-296^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> -296 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-296')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-296', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[734] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-296') * tryProb_catchZero(prob_cng2cng_linear, '-296^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> -296 -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-296')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-296', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[735] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-296') * tryProb_catchZero(prob_cng2cng_linear, '-296^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> -296 -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-296')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-296', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[736] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-296') * tryProb_catchZero(prob_cng2cng_linear, '-296^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> -296 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-296')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-296', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[737] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-296') * tryProb_catchZero(prob_cng2cng_linear, '-296^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 3_sp -> 5_sp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_sp', '5_sp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '5_sp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[738] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_sp') * tryProb_catchZero(prob_cng2cng_linear, '3_sp^5_sp') * tryProb_catchZero(prob_cng2lem_linear, '5_sp^' + node2.lemma);
     
     # L -> 3_sp -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_sp', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[739] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_sp') * tryProb_catchZero(prob_cng2cng_linear, '3_sp^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 3_sp -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_sp', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[740] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_sp') * tryProb_catchZero(prob_cng2cng_linear, '3_sp^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 3_sp -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_sp', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[741] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_sp') * tryProb_catchZero(prob_cng2cng_linear, '3_sp^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 3_sp -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_sp', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[742] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_sp') * tryProb_catchZero(prob_cng2cng_linear, '3_sp^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> 3_sp -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_sp', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[743] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_sp') * tryProb_catchZero(prob_cng2cng_linear, '3_sp^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> 3_sp -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_sp', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[744] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_sp') * tryProb_catchZero(prob_cng2cng_linear, '3_sp^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> 3_sp -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_sp', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[745] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_sp') * tryProb_catchZero(prob_cng2cng_linear, '3_sp^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> 3_sp -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_sp', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[746] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_sp') * tryProb_catchZero(prob_cng2cng_linear, '3_sp^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 3_sp -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_sp', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[747] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_sp') * tryProb_catchZero(prob_cng2cng_linear, '3_sp^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> 3_sp -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_sp', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[748] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_sp') * tryProb_catchZero(prob_cng2cng_linear, '3_sp^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 3_sp -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_sp', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[749] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_sp') * tryProb_catchZero(prob_cng2cng_linear, '3_sp^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> 3_sp -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_sp', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[750] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_sp') * tryProb_catchZero(prob_cng2cng_linear, '3_sp^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> 3_sp -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_sp', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[751] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_sp') * tryProb_catchZero(prob_cng2cng_linear, '3_sp^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> 120 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '120')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '120', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[752] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^120') * tryProb_catchZero(prob_cng2cng_linear, '120^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 94 -> 5_sp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '94')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '94', '5_sp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '5_sp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[753] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^94') * tryProb_catchZero(prob_cng2cng_linear, '94^5_sp') * tryProb_catchZero(prob_cng2lem_linear, '5_sp^' + node2.lemma);
     
     # L -> 94 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '94')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '94', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[754] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^94') * tryProb_catchZero(prob_cng2cng_linear, '94^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> 94 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '94')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '94', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[755] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^94') * tryProb_catchZero(prob_cng2cng_linear, '94^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> 94 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '94')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '94', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[756] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^94') * tryProb_catchZero(prob_cng2cng_linear, '94^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> 94 -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '94')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '94', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[757] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^94') * tryProb_catchZero(prob_cng2cng_linear, '94^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> 94 -> -24 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '94')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '94', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[758] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^94') * tryProb_catchZero(prob_cng2cng_linear, '94^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # L -> 94 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '94')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '94', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[759] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^94') * tryProb_catchZero(prob_cng2cng_linear, '94^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> 94 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '94')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '94', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[760] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^94') * tryProb_catchZero(prob_cng2cng_linear, '94^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> 94 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '94')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '94', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[761] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^94') * tryProb_catchZero(prob_cng2cng_linear, '94^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> 94 -> 91 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '94')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '94', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[762] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^94') * tryProb_catchZero(prob_cng2cng_linear, '94^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # L -> 94 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '94')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '94', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[763] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^94') * tryProb_catchZero(prob_cng2cng_linear, '94^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> -200 -> 5_sp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-200')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-200', '5_sp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '5_sp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[764] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-200') * tryProb_catchZero(prob_cng2cng_linear, '-200^5_sp') * tryProb_catchZero(prob_cng2lem_linear, '5_sp^' + node2.lemma);
     
     # L -> -200 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-200')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-200', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[765] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-200') * tryProb_catchZero(prob_cng2cng_linear, '-200^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> -200 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-200')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-200', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[766] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-200') * tryProb_catchZero(prob_cng2cng_linear, '-200^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> -200 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-200')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-200', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[767] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-200') * tryProb_catchZero(prob_cng2cng_linear, '-200^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> -200 -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-200')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-200', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[768] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-200') * tryProb_catchZero(prob_cng2cng_linear, '-200^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> -200 -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-200')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-200', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[769] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-200') * tryProb_catchZero(prob_cng2cng_linear, '-200^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> -200 -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-200')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-200', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[770] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-200') * tryProb_catchZero(prob_cng2cng_linear, '-200^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> -200 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-200')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-200', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[771] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-200') * tryProb_catchZero(prob_cng2cng_linear, '-200^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> -200 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-200')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-200', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[772] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-200') * tryProb_catchZero(prob_cng2cng_linear, '-200^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> -200 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-200')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-200', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[773] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-200') * tryProb_catchZero(prob_cng2cng_linear, '-200^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> -200 -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-200')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-200', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[774] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-200') * tryProb_catchZero(prob_cng2cng_linear, '-200^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> -200 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-200')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-200', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[775] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-200') * tryProb_catchZero(prob_cng2cng_linear, '-200^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> -81 -> 5_sp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-81')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-81', '5_sp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '5_sp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[776] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-81') * tryProb_catchZero(prob_cng2cng_linear, '-81^5_sp') * tryProb_catchZero(prob_cng2lem_linear, '5_sp^' + node2.lemma);
     
     # L -> -81 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-81')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-81', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[777] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-81') * tryProb_catchZero(prob_cng2cng_linear, '-81^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # L -> -81 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-81')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-81', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[778] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-81') * tryProb_catchZero(prob_cng2cng_linear, '-81^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # L -> -81 -> 54 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-81')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-81', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[779] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-81') * tryProb_catchZero(prob_cng2cng_linear, '-81^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # L -> -81 -> pl -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-81')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-81', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[780] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-81') * tryProb_catchZero(prob_cng2cng_linear, '-81^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # L -> -81 -> 153 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-81')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-81', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[781] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-81') * tryProb_catchZero(prob_cng2cng_linear, '-81^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # L -> -81 -> 28 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-81')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-81', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[782] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-81') * tryProb_catchZero(prob_cng2cng_linear, '-81^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # L -> -81 -> 137 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-81')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-81', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[783] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-81') * tryProb_catchZero(prob_cng2cng_linear, '-81^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # L -> -81 -> -112 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-81')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-81', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[784] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-81') * tryProb_catchZero(prob_cng2cng_linear, '-81^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # L -> -81 -> 101 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-81')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-81', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[785] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-81') * tryProb_catchZero(prob_cng2cng_linear, '-81^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # L -> -81 -> -35 -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-81')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-81', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[786] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-81') * tryProb_catchZero(prob_cng2cng_linear, '-81^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # L -> -81 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-81')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-81', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[787] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-81') * tryProb_catchZero(prob_cng2cng_linear, '-81^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # L -> tp -> dat. du. -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'tp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'tp', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, 'dat. du.', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[788] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^tp') * tryProb_catchZero(prob_cng2cng_linear, 'tp^dat. du.') * tryProb_catchZero(prob_cng2tup_linear, 'dat. du.^' + node2.tup);
     
     # L -> tp -> 101 -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'tp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'tp', '101')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '101', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[789] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^tp') * tryProb_catchZero(prob_cng2cng_linear, 'tp^101') * tryProb_catchZero(prob_cng2tup_linear, '101^' + node2.tup);
     
     # L -> 5_du -> 153 -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_du', '153')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '153', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[790] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_du') * tryProb_catchZero(prob_cng2cng_linear, '5_du^153') * tryProb_catchZero(prob_cng2tup_linear, '153^' + node2.tup);
     
     # L -> 157 -> 54 -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '157')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '157', '54')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '54', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[791] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^157') * tryProb_catchZero(prob_cng2cng_linear, '157^54') * tryProb_catchZero(prob_cng2tup_linear, '54^' + node2.tup);
     
     # L -> 157 -> 137 -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '157')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '157', '137')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '137', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[792] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^157') * tryProb_catchZero(prob_cng2cng_linear, '157^137') * tryProb_catchZero(prob_cng2tup_linear, '137^' + node2.tup);
     
     # L -> 157 -> 101 -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '157')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '157', '101')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '101', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[793] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^157') * tryProb_catchZero(prob_cng2cng_linear, '157^101') * tryProb_catchZero(prob_cng2tup_linear, '101^' + node2.tup);
     
     # L -> 157 -> 3_du -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '157')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '157', '3_du')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '3_du', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[794] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^157') * tryProb_catchZero(prob_cng2cng_linear, '157^3_du') * tryProb_catchZero(prob_cng2tup_linear, '3_du^' + node2.tup);
     
     # L -> 5_sp -> -90 -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_sp', '-90')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '-90', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[795] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_sp') * tryProb_catchZero(prob_cng2cng_linear, '5_sp^-90') * tryProb_catchZero(prob_cng2tup_linear, '-90^' + node2.tup);
     
     # L -> 5_sp -> 91 -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '5_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_sp', '91')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '91', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[796] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^5_sp') * tryProb_catchZero(prob_cng2cng_linear, '5_sp^91') * tryProb_catchZero(prob_cng2tup_linear, '91^' + node2.tup);
     
     # L -> -151 -> -24 -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-151')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-151', '-24')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '-24', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[797] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-151') * tryProb_catchZero(prob_cng2cng_linear, '-151^-24') * tryProb_catchZero(prob_cng2tup_linear, '-24^' + node2.tup);
     
     # L -> acc. sg. -> 101 -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'acc. sg.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'acc. sg.', '101')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '101', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[798] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^acc. sg.') * tryProb_catchZero(prob_cng2cng_linear, 'acc. sg.^101') * tryProb_catchZero(prob_cng2tup_linear, '101^' + node2.tup);
     
     # L -> -25 -> 137 -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-25')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-25', '137')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '137', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[799] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-25') * tryProb_catchZero(prob_cng2cng_linear, '-25^137') * tryProb_catchZero(prob_cng2tup_linear, '137^' + node2.tup);
     
     # L -> -25 -> 101 -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-25')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-25', '101')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '101', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[800] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-25') * tryProb_catchZero(prob_cng2cng_linear, '-25^101') * tryProb_catchZero(prob_cng2tup_linear, '101^' + node2.tup);
     
     # L -> -57 -> 91 -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-57')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-57', '91')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '91', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[801] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-57') * tryProb_catchZero(prob_cng2cng_linear, '-57^91') * tryProb_catchZero(prob_cng2tup_linear, '91^' + node2.tup);
     
     # L -> 8_fp -> 91 -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '8_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_fp', '91')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '91', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[802] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^8_fp') * tryProb_catchZero(prob_cng2cng_linear, '8_fp^91') * tryProb_catchZero(prob_cng2tup_linear, '91^' + node2.tup);
     
     # L -> 54 -> 8_fp -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', '8_fp')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '8_fp', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[803] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^8_fp') * tryProb_catchZero(prob_cng2tup_linear, '8_fp^' + node2.tup);
     
     # L -> 55 -> 101 -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '55')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '55', '101')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '101', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[804] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^55') * tryProb_catchZero(prob_cng2cng_linear, '55^101') * tryProb_catchZero(prob_cng2tup_linear, '101^' + node2.tup);
     
     # L -> -156 -> 101 -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-156')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-156', '101')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '101', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[805] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-156') * tryProb_catchZero(prob_cng2cng_linear, '-156^101') * tryProb_catchZero(prob_cng2tup_linear, '101^' + node2.tup);
     
     # L -> -29 -> 54 -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-29')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-29', '54')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '54', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[806] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-29') * tryProb_catchZero(prob_cng2cng_linear, '-29^54') * tryProb_catchZero(prob_cng2tup_linear, '54^' + node2.tup);
     
     # L -> -29 -> 137 -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-29')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-29', '137')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '137', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[807] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-29') * tryProb_catchZero(prob_cng2cng_linear, '-29^137') * tryProb_catchZero(prob_cng2tup_linear, '137^' + node2.tup);
     
     # L -> -29 -> 101 -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-29')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-29', '101')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '101', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[808] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-29') * tryProb_catchZero(prob_cng2cng_linear, '-29^101') * tryProb_catchZero(prob_cng2tup_linear, '101^' + node2.tup);
     
     # L -> 153 -> -24 -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', '-24')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '-24', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[809] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^-24') * tryProb_catchZero(prob_cng2tup_linear, '-24^' + node2.tup);
     
     # L -> -24 -> pl -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '-24')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-24', 'pl')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, 'pl', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[810] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^-24') * tryProb_catchZero(prob_cng2cng_linear, '-24^pl') * tryProb_catchZero(prob_cng2tup_linear, 'pl^' + node2.tup);
     
     # L -> acc -> dat. du. -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'acc')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'acc', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, 'dat. du.', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[811] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^acc') * tryProb_catchZero(prob_cng2cng_linear, 'acc^dat. du.') * tryProb_catchZero(prob_cng2tup_linear, 'dat. du.^' + node2.tup);
     
     # L -> acc -> 101 -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, 'acc')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'acc', '101')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '101', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[812] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^acc') * tryProb_catchZero(prob_cng2cng_linear, 'acc^101') * tryProb_catchZero(prob_cng2tup_linear, '101^' + node2.tup);
     
     # L -> 13_pl -> 54 -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '13_pl')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '13_pl', '54')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '54', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[813] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^13_pl') * tryProb_catchZero(prob_cng2cng_linear, '13_pl^54') * tryProb_catchZero(prob_cng2tup_linear, '54^' + node2.tup);
     
     # L -> 101 -> -151 -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '-151')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '-151', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[814] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^-151') * tryProb_catchZero(prob_cng2tup_linear, '-151^' + node2.tup);
     
     # L -> 101 -> 8_fp -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '8_fp')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '8_fp', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[815] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^8_fp') * tryProb_catchZero(prob_cng2tup_linear, '8_fp^' + node2.tup);
     
     # L -> 91 -> 91 -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '91', '91')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '91', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[816] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^91') * tryProb_catchZero(prob_cng2cng_linear, '91^91') * tryProb_catchZero(prob_cng2tup_linear, '91^' + node2.tup);
     
     # L -> 3_du -> 91 -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '3_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_du', '91')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '91', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[817] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^3_du') * tryProb_catchZero(prob_cng2cng_linear, '3_du^91') * tryProb_catchZero(prob_cng2tup_linear, '91^' + node2.tup);
     
     # L -> 35 -> 8_fp -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '35')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '35', '8_fp')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '8_fp', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[818] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^35') * tryProb_catchZero(prob_cng2cng_linear, '35^8_fp') * tryProb_catchZero(prob_cng2tup_linear, '8_fp^' + node2.tup);
     
     # L -> 35 -> 54 -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '35')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '35', '54')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '54', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[819] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^35') * tryProb_catchZero(prob_cng2cng_linear, '35^54') * tryProb_catchZero(prob_cng2tup_linear, '54^' + node2.tup);
     
     # L -> 35 -> pl -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '35')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '35', 'pl')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, 'pl', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[820] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^35') * tryProb_catchZero(prob_cng2cng_linear, '35^pl') * tryProb_catchZero(prob_cng2tup_linear, 'pl^' + node2.tup);
     
     # L -> 35 -> 101 -> T
-    pleft = tryProb_catchZero(mat_lem2cng_countonly, mat_lemCount_1D, node1.lemma, '35')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '35', '101')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '101', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[821] = tryProb_catchZero(prob_lem2cng_linear, node1.lemma + '^35') * tryProb_catchZero(prob_cng2cng_linear, '35^101') * tryProb_catchZero(prob_cng2tup_linear, '101^' + node2.tup);
     
     # T -> gen. sg. -> 137 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, 'gen. sg.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'gen. sg.', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[822] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^gen. sg.') * tryProb_catchZero(prob_cng2cng_linear, 'gen. sg.^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # T -> gen. sg. -> 101 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, 'gen. sg.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'gen. sg.', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[823] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^gen. sg.') * tryProb_catchZero(prob_cng2cng_linear, 'gen. sg.^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # T -> 5_sp -> 54 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '5_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_sp', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[824] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^5_sp') * tryProb_catchZero(prob_cng2cng_linear, '5_sp^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # T -> 5_sp -> -24 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '5_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_sp', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[825] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^5_sp') * tryProb_catchZero(prob_cng2cng_linear, '5_sp^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # T -> 5_sp -> 137 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '5_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_sp', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[826] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^5_sp') * tryProb_catchZero(prob_cng2cng_linear, '5_sp^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # T -> 5_sp -> -112 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '5_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_sp', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[827] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^5_sp') * tryProb_catchZero(prob_cng2cng_linear, '5_sp^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # T -> 5_sp -> 101 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '5_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_sp', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[828] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^5_sp') * tryProb_catchZero(prob_cng2cng_linear, '5_sp^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # T -> 5_sp -> 91 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '5_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_sp', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[829] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^5_sp') * tryProb_catchZero(prob_cng2cng_linear, '5_sp^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # T -> 5_sp -> 3_du -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '5_sp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '5_sp', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[830] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^5_sp') * tryProb_catchZero(prob_cng2cng_linear, '5_sp^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # T -> dat. du. -> 54 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, 'dat. du.')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'dat. du.', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[831] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^dat. du.') * tryProb_catchZero(prob_cng2cng_linear, 'dat. du.^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # T -> 15_du -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '15_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '15_du', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[832] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^15_du') * tryProb_catchZero(prob_cng2cng_linear, '15_du^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # T -> 15_du -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '15_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '15_du', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[833] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^15_du') * tryProb_catchZero(prob_cng2cng_linear, '15_du^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # T -> 15_du -> 54 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '15_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '15_du', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[834] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^15_du') * tryProb_catchZero(prob_cng2cng_linear, '15_du^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # T -> 15_du -> pl -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '15_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '15_du', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[835] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^15_du') * tryProb_catchZero(prob_cng2cng_linear, '15_du^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # T -> 15_du -> 153 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '15_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '15_du', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[836] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^15_du') * tryProb_catchZero(prob_cng2cng_linear, '15_du^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # T -> 15_du -> 28 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '15_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '15_du', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[837] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^15_du') * tryProb_catchZero(prob_cng2cng_linear, '15_du^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # T -> 15_du -> 137 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '15_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '15_du', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[838] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^15_du') * tryProb_catchZero(prob_cng2cng_linear, '15_du^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # T -> 15_du -> -112 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '15_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '15_du', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[839] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^15_du') * tryProb_catchZero(prob_cng2cng_linear, '15_du^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # T -> 15_du -> 101 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '15_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '15_du', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[840] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^15_du') * tryProb_catchZero(prob_cng2cng_linear, '15_du^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # T -> 15_du -> 3_du -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '15_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '15_du', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[841] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^15_du') * tryProb_catchZero(prob_cng2cng_linear, '15_du^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # T -> -151 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-151')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-151', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[842] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-151') * tryProb_catchZero(prob_cng2cng_linear, '-151^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # T -> -151 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-151')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-151', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[843] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-151') * tryProb_catchZero(prob_cng2cng_linear, '-151^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # T -> -151 -> 54 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-151')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-151', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[844] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-151') * tryProb_catchZero(prob_cng2cng_linear, '-151^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # T -> -151 -> pl -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-151')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-151', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[845] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-151') * tryProb_catchZero(prob_cng2cng_linear, '-151^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # T -> -151 -> 153 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-151')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-151', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[846] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-151') * tryProb_catchZero(prob_cng2cng_linear, '-151^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # T -> -151 -> 28 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-151')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-151', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[847] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-151') * tryProb_catchZero(prob_cng2cng_linear, '-151^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # T -> -151 -> 137 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-151')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-151', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[848] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-151') * tryProb_catchZero(prob_cng2cng_linear, '-151^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # T -> -151 -> -112 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-151')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-151', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[849] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-151') * tryProb_catchZero(prob_cng2cng_linear, '-151^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # T -> -151 -> 101 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-151')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-151', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[850] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-151') * tryProb_catchZero(prob_cng2cng_linear, '-151^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # T -> -151 -> -35 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-151')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-151', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[851] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-151') * tryProb_catchZero(prob_cng2cng_linear, '-151^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # T -> -151 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-151')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-151', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[852] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-151') * tryProb_catchZero(prob_cng2cng_linear, '-151^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # T -> -306 -> 137 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-306')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-306', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[853] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-306') * tryProb_catchZero(prob_cng2cng_linear, '-306^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # T -> -306 -> 101 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-306')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-306', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[854] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-306') * tryProb_catchZero(prob_cng2cng_linear, '-306^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # T -> -90 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-90')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-90', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[855] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-90') * tryProb_catchZero(prob_cng2cng_linear, '-90^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # T -> -90 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-90')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-90', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[856] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-90') * tryProb_catchZero(prob_cng2cng_linear, '-90^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # T -> -90 -> 54 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-90')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-90', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[857] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-90') * tryProb_catchZero(prob_cng2cng_linear, '-90^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # T -> -90 -> 153 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-90')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-90', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[858] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-90') * tryProb_catchZero(prob_cng2cng_linear, '-90^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # T -> -90 -> 137 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-90')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-90', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[859] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-90') * tryProb_catchZero(prob_cng2cng_linear, '-90^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # T -> -90 -> -112 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-90')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-90', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[860] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-90') * tryProb_catchZero(prob_cng2cng_linear, '-90^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # T -> -90 -> 101 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-90')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-90', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[861] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-90') * tryProb_catchZero(prob_cng2cng_linear, '-90^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # T -> -90 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-90')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-90', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[862] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-90') * tryProb_catchZero(prob_cng2cng_linear, '-90^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # T -> -57 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-57')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-57', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[863] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-57') * tryProb_catchZero(prob_cng2cng_linear, '-57^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # T -> -57 -> 54 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-57')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-57', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[864] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-57') * tryProb_catchZero(prob_cng2cng_linear, '-57^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # T -> -57 -> pl -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-57')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-57', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[865] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-57') * tryProb_catchZero(prob_cng2cng_linear, '-57^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # T -> -57 -> 153 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-57')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-57', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[866] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-57') * tryProb_catchZero(prob_cng2cng_linear, '-57^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # T -> -57 -> 137 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-57')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-57', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[867] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-57') * tryProb_catchZero(prob_cng2cng_linear, '-57^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # T -> -57 -> -112 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-57')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-57', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[868] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-57') * tryProb_catchZero(prob_cng2cng_linear, '-57^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # T -> -57 -> 101 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-57')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-57', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[869] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-57') * tryProb_catchZero(prob_cng2cng_linear, '-57^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # T -> 8_fp -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '8_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_fp', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[870] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^8_fp') * tryProb_catchZero(prob_cng2cng_linear, '8_fp^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # T -> 8_fp -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '8_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_fp', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[871] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^8_fp') * tryProb_catchZero(prob_cng2cng_linear, '8_fp^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # T -> 8_fp -> 54 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '8_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_fp', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[872] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^8_fp') * tryProb_catchZero(prob_cng2cng_linear, '8_fp^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # T -> 8_fp -> pl -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '8_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_fp', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[873] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^8_fp') * tryProb_catchZero(prob_cng2cng_linear, '8_fp^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # T -> 8_fp -> 153 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '8_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_fp', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[874] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^8_fp') * tryProb_catchZero(prob_cng2cng_linear, '8_fp^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # T -> 8_fp -> 28 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '8_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_fp', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[875] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^8_fp') * tryProb_catchZero(prob_cng2cng_linear, '8_fp^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # T -> 8_fp -> -24 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '8_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_fp', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[876] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^8_fp') * tryProb_catchZero(prob_cng2cng_linear, '8_fp^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # T -> 8_fp -> 137 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '8_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_fp', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[877] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^8_fp') * tryProb_catchZero(prob_cng2cng_linear, '8_fp^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # T -> 8_fp -> -112 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '8_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_fp', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[878] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^8_fp') * tryProb_catchZero(prob_cng2cng_linear, '8_fp^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # T -> 8_fp -> 101 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '8_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_fp', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[879] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^8_fp') * tryProb_catchZero(prob_cng2cng_linear, '8_fp^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # T -> 8_fp -> 91 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '8_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_fp', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[880] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^8_fp') * tryProb_catchZero(prob_cng2cng_linear, '8_fp^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # T -> 8_fp -> -35 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '8_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_fp', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[881] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^8_fp') * tryProb_catchZero(prob_cng2cng_linear, '8_fp^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # T -> 8_fp -> 3_du -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '8_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '8_fp', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[882] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^8_fp') * tryProb_catchZero(prob_cng2cng_linear, '8_fp^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # T -> 169 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '169')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '169', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[883] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^169') * tryProb_catchZero(prob_cng2cng_linear, '169^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # T -> 169 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '169')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '169', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[884] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^169') * tryProb_catchZero(prob_cng2cng_linear, '169^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # T -> 54 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[885] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # T -> 54 -> -151 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', '-151')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-151', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[886] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^-151') * tryProb_catchZero(prob_cng2lem_linear, '-151^' + node2.lemma);
     
     # T -> 54 -> -90 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', '-90')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-90', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[887] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^-90') * tryProb_catchZero(prob_cng2lem_linear, '-90^' + node2.lemma);
     
     # T -> 54 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[888] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # T -> 54 -> 54 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[889] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # T -> 54 -> pl -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[890] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # T -> 54 -> 153 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[891] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # T -> 54 -> 135 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', '135')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '135', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[892] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^135') * tryProb_catchZero(prob_cng2lem_linear, '135^' + node2.lemma);
     
     # T -> 54 -> -24 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[893] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # T -> 54 -> 137 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[894] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # T -> 54 -> -112 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[895] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # T -> 54 -> 101 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[896] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # T -> 54 -> 91 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[897] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # T -> 54 -> -35 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[898] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # T -> 54 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '54')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '54', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[899] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^54') * tryProb_catchZero(prob_cng2cng_linear, '54^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # T -> 114 -> 54 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '114')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '114', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[900] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^114') * tryProb_catchZero(prob_cng2cng_linear, '114^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # T -> 114 -> 101 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '114')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '114', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[901] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^114') * tryProb_catchZero(prob_cng2cng_linear, '114^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # T -> -139 -> 137 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-139', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[902] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-139') * tryProb_catchZero(prob_cng2cng_linear, '-139^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # T -> -139 -> 101 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-139', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[903] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-139') * tryProb_catchZero(prob_cng2cng_linear, '-139^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # T -> 139 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '139', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[904] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^139') * tryProb_catchZero(prob_cng2cng_linear, '139^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # T -> 139 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '139', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[905] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^139') * tryProb_catchZero(prob_cng2cng_linear, '139^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # T -> 139 -> 54 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '139', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[906] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^139') * tryProb_catchZero(prob_cng2cng_linear, '139^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # T -> 139 -> pl -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '139', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[907] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^139') * tryProb_catchZero(prob_cng2cng_linear, '139^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # T -> 139 -> 153 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '139', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[908] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^139') * tryProb_catchZero(prob_cng2cng_linear, '139^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # T -> 139 -> 28 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '139', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[909] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^139') * tryProb_catchZero(prob_cng2cng_linear, '139^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # T -> 139 -> 137 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '139', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[910] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^139') * tryProb_catchZero(prob_cng2cng_linear, '139^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # T -> 139 -> -112 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '139', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[911] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^139') * tryProb_catchZero(prob_cng2cng_linear, '139^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # T -> 139 -> 101 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '139', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[912] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^139') * tryProb_catchZero(prob_cng2cng_linear, '139^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # T -> 139 -> -35 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '139', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[913] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^139') * tryProb_catchZero(prob_cng2cng_linear, '139^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # T -> 139 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '139')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '139', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[914] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^139') * tryProb_catchZero(prob_cng2cng_linear, '139^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # T -> pl -> -90 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, 'pl')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'pl', '-90')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-90', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[915] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^pl') * tryProb_catchZero(prob_cng2cng_linear, 'pl^-90') * tryProb_catchZero(prob_cng2lem_linear, '-90^' + node2.lemma);
     
     # T -> pl -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, 'pl')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'pl', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[916] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^pl') * tryProb_catchZero(prob_cng2cng_linear, 'pl^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # T -> pl -> 54 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, 'pl')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'pl', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[917] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^pl') * tryProb_catchZero(prob_cng2cng_linear, 'pl^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # T -> pl -> -24 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, 'pl')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'pl', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[918] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^pl') * tryProb_catchZero(prob_cng2cng_linear, 'pl^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # T -> pl -> -112 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, 'pl')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'pl', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[919] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^pl') * tryProb_catchZero(prob_cng2cng_linear, 'pl^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # T -> pl -> 101 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, 'pl')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'pl', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[920] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^pl') * tryProb_catchZero(prob_cng2cng_linear, 'pl^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # T -> 153 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[921] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # T -> 153 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[922] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # T -> 153 -> 54 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[923] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # T -> 153 -> pl -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[924] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # T -> 153 -> 153 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[925] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # T -> 153 -> 28 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[926] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # T -> 153 -> -24 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[927] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # T -> 153 -> 137 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[928] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # T -> 153 -> -112 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[929] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # T -> 153 -> 101 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[930] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # T -> 153 -> 91 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[931] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # T -> 153 -> -35 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[932] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # T -> 153 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[933] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # T -> 135 -> 54 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '135')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '135', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[934] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^135') * tryProb_catchZero(prob_cng2cng_linear, '135^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # T -> 135 -> pl -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '135')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '135', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[935] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^135') * tryProb_catchZero(prob_cng2cng_linear, '135^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # T -> 135 -> 137 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '135')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '135', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[936] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^135') * tryProb_catchZero(prob_cng2cng_linear, '135^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # T -> 135 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '135')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '135', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[937] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^135') * tryProb_catchZero(prob_cng2cng_linear, '135^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # T -> 7_fp -> 101 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '7_fp')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '7_fp', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[938] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^7_fp') * tryProb_catchZero(prob_cng2cng_linear, '7_fp^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # T -> neutr -> 137 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, 'neutr')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'neutr', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[939] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^neutr') * tryProb_catchZero(prob_cng2cng_linear, 'neutr^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # T -> neutr -> 101 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, 'neutr')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, 'neutr', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[940] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^neutr') * tryProb_catchZero(prob_cng2cng_linear, 'neutr^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # T -> -153 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-153', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[941] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-153') * tryProb_catchZero(prob_cng2cng_linear, '-153^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # T -> -153 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-153', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[942] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-153') * tryProb_catchZero(prob_cng2cng_linear, '-153^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # T -> -153 -> 54 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-153', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[943] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-153') * tryProb_catchZero(prob_cng2cng_linear, '-153^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # T -> -153 -> pl -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-153', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[944] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-153') * tryProb_catchZero(prob_cng2cng_linear, '-153^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # T -> -153 -> 28 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-153', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[945] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-153') * tryProb_catchZero(prob_cng2cng_linear, '-153^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # T -> -153 -> 137 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-153', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[946] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-153') * tryProb_catchZero(prob_cng2cng_linear, '-153^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # T -> -153 -> 101 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-153', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[947] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-153') * tryProb_catchZero(prob_cng2cng_linear, '-153^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # T -> -153 -> -35 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-153', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[948] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-153') * tryProb_catchZero(prob_cng2cng_linear, '-153^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # T -> -153 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-153', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[949] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-153') * tryProb_catchZero(prob_cng2cng_linear, '-153^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # T -> -24 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-24')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-24', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[950] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-24') * tryProb_catchZero(prob_cng2cng_linear, '-24^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # T -> -24 -> 54 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-24')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-24', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[951] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-24') * tryProb_catchZero(prob_cng2cng_linear, '-24^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # T -> -24 -> pl -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-24')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-24', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[952] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-24') * tryProb_catchZero(prob_cng2cng_linear, '-24^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # T -> -24 -> 137 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-24')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-24', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[953] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-24') * tryProb_catchZero(prob_cng2cng_linear, '-24^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # T -> -24 -> -112 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-24')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-24', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[954] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-24') * tryProb_catchZero(prob_cng2cng_linear, '-24^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # T -> -24 -> 101 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-24')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-24', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[955] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-24') * tryProb_catchZero(prob_cng2cng_linear, '-24^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # T -> 137 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '137')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '137', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[956] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^137') * tryProb_catchZero(prob_cng2cng_linear, '137^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # T -> 137 -> -151 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '137')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '137', '-151')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-151', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[957] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^137') * tryProb_catchZero(prob_cng2cng_linear, '137^-151') * tryProb_catchZero(prob_cng2lem_linear, '-151^' + node2.lemma);
     
     # T -> 137 -> 54 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '137')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '137', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[958] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^137') * tryProb_catchZero(prob_cng2cng_linear, '137^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # T -> 137 -> 153 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '137')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '137', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[959] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^137') * tryProb_catchZero(prob_cng2cng_linear, '137^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # T -> 137 -> 28 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '137')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '137', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[960] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^137') * tryProb_catchZero(prob_cng2cng_linear, '137^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # T -> 137 -> -24 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '137')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '137', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[961] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^137') * tryProb_catchZero(prob_cng2cng_linear, '137^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # T -> 137 -> 137 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '137')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '137', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[962] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^137') * tryProb_catchZero(prob_cng2cng_linear, '137^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # T -> 137 -> -112 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '137')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '137', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[963] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^137') * tryProb_catchZero(prob_cng2cng_linear, '137^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # T -> 137 -> 101 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '137')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '137', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[964] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^137') * tryProb_catchZero(prob_cng2cng_linear, '137^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # T -> 137 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '137')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '137', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[965] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^137') * tryProb_catchZero(prob_cng2cng_linear, '137^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # T -> -112 -> 153 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-112')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-112', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[966] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-112') * tryProb_catchZero(prob_cng2cng_linear, '-112^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # T -> -112 -> -112 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-112')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-112', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[967] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-112') * tryProb_catchZero(prob_cng2cng_linear, '-112^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # T -> 101 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[968] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # T -> 101 -> -151 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '-151')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-151', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[969] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^-151') * tryProb_catchZero(prob_cng2lem_linear, '-151^' + node2.lemma);
     
     # T -> 101 -> -90 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '-90')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-90', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[970] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^-90') * tryProb_catchZero(prob_cng2lem_linear, '-90^' + node2.lemma);
     
     # T -> 101 -> -57 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '-57')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-57', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[971] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^-57') * tryProb_catchZero(prob_cng2lem_linear, '-57^' + node2.lemma);
     
     # T -> 101 -> 8_fp -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '8_fp')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '8_fp', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[972] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^8_fp') * tryProb_catchZero(prob_cng2lem_linear, '8_fp^' + node2.lemma);
     
     # T -> 101 -> 169 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '169')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '169', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[973] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^169') * tryProb_catchZero(prob_cng2lem_linear, '169^' + node2.lemma);
     
     # T -> 101 -> 54 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[974] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # T -> 101 -> 114 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '114')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '114', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[975] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^114') * tryProb_catchZero(prob_cng2lem_linear, '114^' + node2.lemma);
     
     # T -> 101 -> pl -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', 'pl')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'pl', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[976] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^pl') * tryProb_catchZero(prob_cng2lem_linear, 'pl^' + node2.lemma);
     
     # T -> 101 -> 153 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[977] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # T -> 101 -> 28 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '28')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '28', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[978] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^28') * tryProb_catchZero(prob_cng2lem_linear, '28^' + node2.lemma);
     
     # T -> 101 -> -24 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[979] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # T -> 101 -> 137 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[980] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # T -> 101 -> -112 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[981] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # T -> 101 -> 101 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[982] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # T -> 101 -> 91 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[983] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # T -> 101 -> -35 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[984] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # T -> 101 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '101')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '101', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[985] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^101') * tryProb_catchZero(prob_cng2cng_linear, '101^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # T -> 91 -> dat. du. -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '91', 'dat. du.')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, 'dat. du.', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[986] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^91') * tryProb_catchZero(prob_cng2cng_linear, '91^dat. du.') * tryProb_catchZero(prob_cng2lem_linear, 'dat. du.^' + node2.lemma);
     
     # T -> 91 -> 54 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '91', '54')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '54', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[987] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^91') * tryProb_catchZero(prob_cng2cng_linear, '91^54') * tryProb_catchZero(prob_cng2lem_linear, '54^' + node2.lemma);
     
     # T -> 91 -> 153 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '91', '153')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '153', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[988] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^91') * tryProb_catchZero(prob_cng2cng_linear, '91^153') * tryProb_catchZero(prob_cng2lem_linear, '153^' + node2.lemma);
     
     # T -> 91 -> -24 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '91', '-24')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-24', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[989] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^91') * tryProb_catchZero(prob_cng2cng_linear, '91^-24') * tryProb_catchZero(prob_cng2lem_linear, '-24^' + node2.lemma);
     
     # T -> 91 -> 137 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '91', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[990] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^91') * tryProb_catchZero(prob_cng2cng_linear, '91^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # T -> 91 -> -112 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '91', '-112')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-112', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[991] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^91') * tryProb_catchZero(prob_cng2cng_linear, '91^-112') * tryProb_catchZero(prob_cng2lem_linear, '-112^' + node2.lemma);
     
     # T -> 91 -> 101 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '91', '101')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '101', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[992] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^91') * tryProb_catchZero(prob_cng2cng_linear, '91^101') * tryProb_catchZero(prob_cng2lem_linear, '101^' + node2.lemma);
     
     # T -> 91 -> 91 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '91', '91')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '91', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[993] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^91') * tryProb_catchZero(prob_cng2cng_linear, '91^91') * tryProb_catchZero(prob_cng2lem_linear, '91^' + node2.lemma);
     
     # T -> 91 -> -35 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '91', '-35')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '-35', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[994] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^91') * tryProb_catchZero(prob_cng2cng_linear, '91^-35') * tryProb_catchZero(prob_cng2lem_linear, '-35^' + node2.lemma);
     
     # T -> 91 -> 3_du -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '91')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '91', '3_du')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '3_du', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[995] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^91') * tryProb_catchZero(prob_cng2cng_linear, '91^3_du') * tryProb_catchZero(prob_cng2lem_linear, '3_du^' + node2.lemma);
     
     # T -> 3_du -> 137 -> L
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '3_du')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '3_du', '137')
-    pright = tryProb_catchZero(mat_cng2lem_countonly, mat_cngCount_1D, '137', node2.lemma)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[996] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^3_du') * tryProb_catchZero(prob_cng2cng_linear, '3_du^137') * tryProb_catchZero(prob_cng2lem_linear, '137^' + node2.lemma);
     
     # T -> 153 -> 91 -> T
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '153')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '153', '91')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '91', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[997] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^153') * tryProb_catchZero(prob_cng2cng_linear, '153^91') * tryProb_catchZero(prob_cng2tup_linear, '91^' + node2.tup);
     
     # T -> 28 -> 91 -> T
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '28')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '28', '91')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '91', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[998] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^28') * tryProb_catchZero(prob_cng2cng_linear, '28^91') * tryProb_catchZero(prob_cng2tup_linear, '91^' + node2.tup);
     
     # T -> -296 -> 8_fp -> T
-    pleft = tryProb_catchZero(mat_tup2cng_countonly, mat_tupCount_1D, node1.tup, '-296')
-    pmid = tryProb_catchZero(mat_cng2cng_countonly, mat_cngCount_1D, '-296', '8_fp')
-    pright = tryProb_catchZero(mat_cng2tup_countonly, mat_cngCount_1D, '8_fp', node2.tup)
-    feats[fIndex] = pleft * pmid * pright; fIndex += 1
+    feats[999] = tryProb_catchZero(prob_tup2cng_linear, node1.tup + '^-296') * tryProb_catchZero(prob_cng2cng_linear, '-296^8_fp') * tryProb_catchZero(prob_cng2tup_linear, '8_fp^' + node2.tup);
     
     feats[feats < 1e-25] = 1e-25
     return -np.log10(feats)

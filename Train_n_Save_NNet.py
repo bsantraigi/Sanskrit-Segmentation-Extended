@@ -104,16 +104,16 @@ print('nEURAL nET wILL bE sAVED hERE: ', p_name)
 ################################################################################################
 """
 trainingStatus = defaultdict(lambda: bool(False))
+
+
 """
 ################################################################################################
 ##############################  TRAIN FUNCTION  ################################################
 ################################################################################################
 """
 
-def train(loaded_SKT, loaded_DCS, n_trainset = -1, _debug = True):
+def train(loaded_SKT, loaded_DCS, n_trainset = -1, iterationPerBatch = 10, filePerBatch = 20, _debug = True):
     # Train
-    filePerBatch = 20
-    iterationPerBatch = 10
     if n_trainset == -1:
         totalBatchToTrain = 20
     else:
@@ -143,9 +143,9 @@ def train(loaded_SKT, loaded_DCS, n_trainset = -1, _debug = True):
             sys.stdout.flush() # Flush IO buffer 
     trainer.Save(p_name)
     
-    sys.stdout.flush() # Flush IO buffer
+    sys.stdout.flush() # Flush IO buffer 
                 
-def test(loaded_SKT, loaded_DCS, n_testSet = -1, _testFiles = None):
+def test(loaded_SKT, loaded_DCS, n_testSet = -1, _testFiles = None, n_checkpt = 100):
     total_lemma = 0;
     correct_lemma = 0;
 
@@ -169,7 +169,7 @@ def test(loaded_SKT, loaded_DCS, n_testSet = -1, _testFiles = None):
     precisions = []
     precisions_of_words = []
     for fn in _testFiles:
-        if file_counter % 100 == 0:
+        if file_counter % n_checkpt == 0:
             print(file_counter,' Checkpoint... ')
             sys.stdout.flush() # Flush IO buffer 
         file_counter += 1
@@ -200,7 +200,6 @@ def test(loaded_SKT, loaded_DCS, n_testSet = -1, _testFiles = None):
     print('Avg. Micro Precision of Words: {}'.format(np.mean(np.array(precisions_of_words))))
     
     return (recalls, recalls_of_word, precisions, precisions_of_words)
-    
 
 # NEW FUNCTION
 def GetLoss(_mst_adj_graph, _mask_de_correct_edges, _WScalarMat):
@@ -218,22 +217,15 @@ class Trainer:
     def __init__(self):
         self.hidden_layer_size = 300
         self._edge_vector_dim = WD._edge_vector_dim
-        self._full_cnglist = list(WD.mat_cngCount_1D)
+        # self._full_cnglist = list(WD.mat_cngCount_1D)
         self.neuralnet = NN(self._edge_vector_dim, self.hidden_layer_size, outer_relu=True)
-        # self.history = defaultdict(lambda: list())
+        self.history = defaultdict(lambda: list())
         
     def Reset(self):
         self.neuralnet = NN(self._edge_vector_dim, self.hidden_layer_size)
-        # self.history = defaultdict(lambda: list())
+        self.history = defaultdict(lambda: list())
         
     def Save(self, filename):
-        print('Weights Saved: ', p_name)
-        pickle.dump({
-                'U': self.neuralnet.U,
-                'W': self.neuralnet.W,
-                'n': self.neuralnet.n,
-                'd': self.neuralnet.d
-            }, open(p_name, 'wb'))
         #pickle.dump({'nnet': self.neuralnet, 'history': dict(self.history)}, open(filename, 'wb'))
         return
         
@@ -247,6 +239,8 @@ class Trainer:
         neuralnet = self.neuralnet
         minScore = np.inf
         minMst = None
+        
+        # startT = time.time()
         try:
             (nodelist, nodelist_correct, _) = GetTrainingKit(sentenceObj, dcsObj)
             # nodelist = GetNodes(sentenceObj)
@@ -257,14 +251,23 @@ class Trainer:
         conflicts_Dict = Get_Conflicts(nodelist)
         conflicts_Dict_correct = Get_Conflicts(nodelist_correct)
         
+        # print('Load Nodelist + GetConflicts Time: ', time.time() - startT)
+        # startT = time.time()
+        
         featVMat = Get_Feat_Vec_Matrix(nodelist, conflicts_Dict)
         featVMat_correct = Get_Feat_Vec_Matrix(nodelist_correct, conflicts_Dict_correct)
+        
+        # print('Get Edge Features Time: ', time.time() - startT)
+        # startT = time.time()
         
         if not self.neuralnet.outer_relu:
             (WScalarMat, SigmoidGateOutput) = Get_W_Scalar_Matrix_from_FeatVect_Matrix(featVMat, nodelist, conflicts_Dict, neuralnet)
         else:
             WScalarMat = Get_W_Scalar_Matrix_from_FeatVect_Matrix(featVMat, nodelist, conflicts_Dict, neuralnet)
-        # print(WScalarMat)
+        
+        # print('NeuralNet Time: ', time.time() - startT)
+        # startT = time.time()
+        
         # Get all MST
         for source in range(len(nodelist)):
             (mst_nodes, mst_adj_graph, _) = MST(nodelist, WScalarMat, conflicts_Dict, source)
@@ -291,6 +294,9 @@ class Trainer:
                         # print(wd.lemma, wd.cng)
                         break
         dcsLemmas = [l for arr in dcsObj.lemmas for l in arr]
+        
+        # print('All MST Time: ', time.time() - startT)
+        # print('Node Count: ', len(nodelist))
 #         print('\nFull Match: {}, Partial Match: {}, OutOf {}, NodeCount: {}, '.\
 #               format(word_match, lemma_match, len(dcsLemmas), len(nodelist)))
         return (word_match, lemma_match, len(dcsLemmas), n_output_nodes)
@@ -382,7 +388,7 @@ class Trainer:
             pass
         
         Total_Loss /= len(nodelist)
-        # self.history[sentenceObj.sent_id].append(Total_Loss)
+        self.history[sentenceObj.sent_id].append(Total_Loss)
 #         print("\nFileKey: %s, Loss: %6.3f, Loss2: %6.3f" % (sentenceObj.sent_id, Total_Loss, Loss_2))
 
 trainer = None
@@ -412,20 +418,17 @@ if __name__ == '__main__':
     InitModule(matDB)
 
     print('PRE-TRAIN ACCURACIES:')
-    _recalls, _recalls_of_word, _precisions, _precisions_of_words =\
-     test(loaded_SKT, loaded_DCS, n_testSet = 1000, _testFiles = TestFiles)
+    _ = test(loaded_SKT, loaded_DCS, n_testSet = 1000, _testFiles = TestFiles, n_checkpt = 100)
 
     print('TRAINING ROUND 1::')
-    train(loaded_SKT, loaded_DCS, 1000, _debug = False)
+    train(loaded_SKT, loaded_DCS, n_trainset = 1000, filePerBatch = 20, iterationPerBatch = 8, _debug=False)
 
     print('POST-TRAIN ACCURACIES:')
-    _recalls, _recalls_of_word, _precisions, _precisions_of_words =\
-     test(loaded_SKT, loaded_DCS, n_testSet = 1000, _testFiles = TestFiles)
+    _ = test(loaded_SKT, loaded_DCS, n_testSet = 1000, _testFiles = TestFiles, n_checkpt = 100)
 
-    print('TRAINING ROUND 2::')
-    train(loaded_SKT, loaded_DCS, 1000, _debug = False)
+    # print('TRAINING ROUND 2::')
+    # train(loaded_SKT, loaded_DCS, 1000, _debug = False)
 
-    print('POST-TRAIN2 ACCURACIES:')
-    _recalls, _recalls_of_word, _precisions, _precisions_of_words =\
-     test(loaded_SKT, loaded_DCS, n_testSet = 1000, _testFiles = TestFiles_2)
+    print('POST-TRAIN ACCURACIES DIFF SET:')
+    _ = test(loaded_SKT, loaded_DCS, n_testSet = 3000, _testFiles = TestFiles_2, n_checkpt = 100)
     # print ("Not Implemented")
