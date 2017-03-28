@@ -3,33 +3,25 @@ import multiprocessing as mp
 import os
 from sentences import *
 import numpy as np
+from Train_n_Save_NNet import *
 
-Trainer_Module = None
-SKT_DCS_pairs = None
+def pooled_Test(modelFile, vpid, queue, filePerProcess = 100):
+    print('Child process with vpid:{}, pid:{} started.'.format(vpid, os.getpid()))
+    trainer = Trainer()
+    trainer.Load(modelFile)
 
-q = mp.Queue()
-def InitModule(_trainer_module, _skt_dcs_pairs):
-    global Trainer_Module, SKT_DCS_pairs
-    Trainer_Module = _trainer_module
-    SKT_DCS_pairs = _skt_dcs_pairs
+    loaded_SKT = pickle.load(open('../Simultaneous_CompatSKT_10K.p', 'rb'))
+    loaded_DCS = pickle.load(open('../Simultaneous_DCS_10K.p', 'rb'))
 
-def multi_wrapper(q, skt, dcs):
-    TM = q.get()
-    print('NPSUM: ', TM.Test(skt, dcs))
+    loader = pickle.load(open('../bz2Dataset_10K.p', 'rb'))
+    TestFiles = loader['TestFiles']
+    TrainFiles = loader['TrainFiles']
 
-def inner_multiprocess():
-    q.put(Trainer_Module)
-    q.put(Trainer_Module)
-    q.put(Trainer_Module)
-    q.put(Trainer_Module)
+    for i in range(vpid*filePerProcess, vpid*filePerProcess + filePerProcess):
+        fn = TestFiles[i]
+        fn = fn.replace('.ds.bz2', '.p2')
+        sentenceObj = loaded_SKT[fn]
+        dcsObj = loaded_DCS[fn]
+        queue.put(trainer.Test(sentenceObj, dcsObj))
 
-    print(Trainer_Module)
-    procs = [None]*4
-    for i in range(4):
-        procs[i] = Process(target = multi_wrapper, args = (q, SKT_DCS_pairs[i][0], SKT_DCS_pairs[i][1]))
-
-    for proc in procs:
-        proc.start()
-
-    for proc in procs:
-        proc.join()
+    print('Child process with vpid:{}, pid:{} closed.'.format(vpid, os.getpid()))

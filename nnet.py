@@ -53,18 +53,16 @@ class NN:
         # n: Hidden layer size
         
         # TODO: Add Bias terms
-        
         self.n = hidden_layer_size
         self.d = input_dimension
-        # rand_init_range = np.sqrt(6.0/(self.n+self.d))
-        # print(rand_init_range)
-        
+
         rand_init_range = 1e-2
         self.W = np.random.uniform(-rand_init_range, rand_init_range, (self.n, self.d))
-        # rand_init_range = np.sqrt(6.0/(self.n))
+        self.B1 = np.random.uniform(-rand_init_range, rand_init_range, (self.n, 1))
 
         rand_init_range = 1e-1
         self.U = np.random.uniform(-rand_init_range, rand_init_range, (self.n, 1))
+        self.B2 = np.random.uniform(-rand_init_range, rand_init_range, (1, 1))
 
         # Apply relu or sigmoid at the output layer
         # If relu is applied it will be assumed that log is applied to the 
@@ -74,9 +72,9 @@ class NN:
         self.outer_relu = outer_relu
 
     def Forward_Prop(self, x):
-        z2 = np.matmul(self.W, x)
+        z2 = np.matmul(self.W, x) + self.B1
         a2 = lrelu(z2)
-        o = np.matmul(self.U.transpose(), a2)
+        o = np.matmul(self.U.transpose(), a2) + self.B2
         if self.outer_relu:
             # s = relu(o)
             s = o
@@ -89,30 +87,22 @@ class NN:
     def Back_Prop(self, dLdOut, nodeLen, featVMat, _debug = True):
         N = nodeLen
         dLdU = np.zeros(self.U.shape)
+        dLdB2 = np.zeros(self.B2.shape)
+
         dLdW = np.zeros(self.W.shape)
+        dLdB1 = np.zeros(self.B1.shape)
+
         if not self.outer_relu:
             raise Exception('Support for Non-Outer_Relu removed')
-            # etaW = 5e6
-            # etaU = 5e3
-            # batch_size = 0
-            # for i in range(N):
-            #     for j in range(N):
-            #         if dLdOut[i, j] != 0 and (featVMat[i][j] is not None):
-            #             batch_size += 1
-            #             (z2, a2, s) = self.Forward_Prop(featVMat[i][j])
-            #             dLdU += dLdOut[i, j]*a2
-            #             dRelu = d_relu(z2)
-            #             for k in range(self.n):
-            #                 if dRelu[k] != 0:
-            #                     dLdW[k, :, None] += (dLdOut[i, j])*self.U[k]*dRelu[k]*(featVMat[i][j])
-            
-            # self.W -= etaW*dLdW/(batch_size)
-            # self.U -= etaU*dLdU/(batch_size)
+            return
         else:
-            etaW = 0.00001
-            etaU = 0.000003
+            etaW = 3e-5
+            etaB1 = 1e-5
+            
+            etaU = 1e-5
+            etaB2 = 1e-5
+            
             batch_size = 0
-            # print(dLdOut)
             for i in range(N):
                 for j in range(N):
                     if dLdOut[i, j] != 0 and (featVMat[i][j] is not None):
@@ -121,9 +111,16 @@ class NN:
                         # print(a2.transpose())
                         # print('o')
                         # print(np.matmul(self.U.transpose(), a2))
+                        
                         dLdU += dLdOut[i, j]*a2
+                        
+                        dLdB2 += dLdOut[i, j]
+
                         dRelu = d_lrelu(z2)
                         dLdW += (dLdOut[i, j])*(self.U*dRelu)*featVMat[i][j].transpose()
+
+                        dLdB1 += dLdOut[i, j]*np.matmul(self.U.transpose(), dRelu)
+
                         # for k in range(self.n):
                         #     if dRelu[k] != 0:
                         #         dLdW[k, :, None] += (dLdOut[i, j])*self.U[k]*dRelu[k]*(featVMat[i][j])
@@ -133,14 +130,17 @@ class NN:
             # print(dLdU/(batch_size))
             # print('Batch size: ', batch_size)
             if batch_size > 0:
-                # delW = etaW*dLdW/(batch_size)
-                # delU = etaU*dLdU/(batch_size)
                 delW = etaW*dLdW/(batch_size)
                 delU = etaU*dLdU/(batch_size)
+                delB1 = etaB1*dLdB1/batch_size
+                delB2 = etaB2*dLdB2/batch_size
                 if _debug:
                     print('Max(delW): %10.6f\tMax(delU): %10.6f'%(np.max(np.abs(delW)), np.max(np.abs(delU))))
                 self.W -= delW
+                self.B1 -= delB1
+
                 self.U -= delU
+                self.B2 -= delB2
 
         
         

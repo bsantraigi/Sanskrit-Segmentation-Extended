@@ -3,6 +3,7 @@ IMPORTS
 """
 
 ## bUILT-iN pACKAGES
+import time
 import sys
 import pickle
 from collections import defaultdict
@@ -12,6 +13,7 @@ import math
 import matplotlib.pyplot as plt
 np.set_printoptions(suppress=True)
 from IPython.display import display
+import bz2
 
 ## lAST sUMMER
 from romtoslp import *
@@ -32,6 +34,25 @@ from nnet import *
 # loaded_SKT = pickle.load(open('../Simultaneous_CompatSKT_10K.p', 'rb'))
 # loaded_DCS = pickle.load(open('../Simultaneous_DCS_10K.p', 'rb'))
 
+"""
+################################################################################################
+###########################  OPENS AND EXTRACTS DCS AND SKT DATA STRUCTURES  ###################
+######################################  FROM BZ2 FILES  ########################################
+"""
+def open_dsbz2(filename):
+    with bz2.BZ2File(filename, 'r') as f:
+        loader = pickle.load(f)
+    
+    conflicts_Dict_correct = loader['conflicts_Dict_correct']
+    nodelist_to_correct_mapping = loader['nodelist_to_correct_mapping']
+    nodelist_correct = loader['nodelist_correct']
+    featVMat_correct = loader['featVMat_correct']
+    featVMat = loader['featVMat']
+    conflicts_Dict = loader['conflicts_Dict']
+    nodelist = loader['nodelist']
+    
+    return (nodelist_correct, conflicts_Dict_correct, featVMat_correct, nodelist_to_correct_mapping,\
+            nodelist, conflicts_Dict, featVMat)
 
 """
 ################################################################################################
@@ -87,16 +108,7 @@ def GetLoss(_mst_adj_graph, _mask_de_correct_edges, _negLogLikelies):
     _negLogLikelies[~_mask_de_correct_edges] *= -1 # BAKA!!! Check before you try to fix this again
     return np.sum(_negLogLikelies)  
 
-"""
-################################################################################################
-##############################  GET A FILENAME TO SAVE WEIGHTS  ################################
-################################################################################################
-"""
-import time
-st = str(int((time.time() * 1e6) % 1e13))
-log_name = 'logs/train_nnet_t{}.out'.format(st)
-p_name = 'outputs/train_nnet_t{}.p'.format(st)
-print('nEURAL nET wILL bE sAVED hERE: ', p_name)
+
 
 """
 ################################################################################################
@@ -115,11 +127,16 @@ trainingStatus = defaultdict(lambda: bool(False))
 def train(loaded_SKT, loaded_DCS, n_trainset = -1, iterationPerBatch = 10, filePerBatch = 20, _debug = True):
     # Train
     if n_trainset == -1:
-        totalBatchToTrain = 20
+        n_trainset = len(TrainFiles)
+        totalBatchToTrain = math.ceil(n_trainset/filePerBatch)
     else:
         totalBatchToTrain = math.ceil(n_trainset/filePerBatch)
     
+    
     for iterout in range(totalBatchToTrain):
+        # Add timer
+        startT = time.time()
+        
         # Change current batch
         trainer.Save(p_name)
         print('Batch: ', iterout)
@@ -131,8 +148,9 @@ def train(loaded_SKT, loaded_DCS, n_trainset = -1, iterationPerBatch = 10, fileP
         for iterin in range(iterationPerBatch):
             print('ITERATION IN', iterin)        
             for fn in files_for_batch:
-                sentenceObj = loaded_SKT[fn]
-                dcsObj = loaded_DCS[fn]
+                trainFileName = fn.replace('.ds.bz2', '.p2')
+                sentenceObj = loaded_SKT[trainFileName]
+                dcsObj = loaded_DCS[trainFileName]
                 if trainingStatus[sentenceObj.sent_id]:
                     continue
                 # trainer.Save('outputs/saved_trainer.p')
@@ -141,6 +159,8 @@ def train(loaded_SKT, loaded_DCS, n_trainset = -1, iterationPerBatch = 10, fileP
                 except (IndexError, KeyError) as e:
                     print('\x1b[31mFailed: {} \x1b[0m'.format(sentenceObj.sent_id))
             sys.stdout.flush() # Flush IO buffer 
+        finishT = time.time()
+        print('Avg. time taken by 1 file(1 iteration): {:.3f}'.format((finishT - startT)/(iterationPerBatch*filePerBatch)))
     trainer.Save(p_name)
     
     sys.stdout.flush() # Flush IO buffer 
@@ -171,10 +191,19 @@ def test(loaded_SKT, loaded_DCS, n_testSet = -1, _testFiles = None, n_checkpt = 
     for fn in _testFiles:
         if file_counter % n_checkpt == 0:
             print(file_counter,' Checkpoint... ')
+            if file_counter > 0:
+                print('Avg. Micro Recall of Lemmas: {}'.format(np.mean(np.array(recalls))))
+                print('Avg. Micro Recall of Words: {}'.format(np.mean(np.array(recalls_of_word))))
+                print('Avg. Micro Precision of Lemmas: {}'.format(np.mean(np.array(precisions))))
+                print('Avg. Micro Precision of Words: {}'.format(np.mean(np.array(precisions_of_words))))
             sys.stdout.flush() # Flush IO buffer 
+        
         file_counter += 1
-        sentenceObj = loaded_SKT[fn]
-        dcsObj = loaded_DCS[fn]        
+        
+        testFileName = fn.replace('.ds.bz2', '.p2')
+        sentenceObj = loaded_SKT[testFileName]
+        dcsObj = loaded_DCS[testFileName]    
+        
         try:
             (word_match, lemma_match, n_dcsWords, n_output_nodes) = trainer.Test(sentenceObj, dcsObj)
             
@@ -214,19 +243,44 @@ def GetLoss(_mst_adj_graph, _mask_de_correct_edges, _WScalarMat):
 ################################################################################################
 """
 class Trainer:
-    def __init__(self):
-        self.hidden_layer_size = 300
-        self._edge_vector_dim = WD._edge_vector_dim
-        # self._full_cnglist = list(WD.mat_cngCount_1D)
-        self.neuralnet = NN(self._edge_vector_dim, self.hidden_layer_size, outer_relu=True)
-        self.history = defaultdict(lambda: list())
-        
+    def __init__(self, modelFile = None):
+        if modelFile is None:
+            self.hidden_layer_size = 300
+            self._edge_vector_dim = 1000
+            # self._edge_vector_dim = WD._edge_vector_dim
+            # self._full_cnglist = list(WD.mat_cngCount_1D)
+            
+            self.neuralnet = NN(self._edge_vector_dim, self.hidden_layer_size, outer_relu=True)
+            self.history = defaultdict(lambda: list())
+        else:
+            loader = pickle.load(open(filename, 'rb'))
+            
+            self.neuralnet.hidden_layer_size = loader['n']
+            self.neuralnet._edge_vector_dim = loader['d']
+
+            self.neuralnet = NN(self._edge_vector_dim, self.hidden_layer_size, outer_relu=True)
+
+            self.neuralnet.U = loader['U']
+            self.neuralnet.W = loader['W']
+            self.neuralnet.B1 = loader['B1']
+            self.neuralnet.B2 = loader['B2']
+            
+            self.history = defaultdict(lambda: list())
+            
     def Reset(self):
         self.neuralnet = NN(self._edge_vector_dim, self.hidden_layer_size)
         self.history = defaultdict(lambda: list())
         
     def Save(self, filename):
-        #pickle.dump({'nnet': self.neuralnet, 'history': dict(self.history)}, open(filename, 'wb'))
+        print('Weights Saved: ', p_name)
+        pickle.dump({
+                'U': self.neuralnet.U,
+                'W': self.neuralnet.W,
+                'n': self.neuralnet.n,
+                'd': self.neuralnet.d,
+                'B1': self.neuralnet.B1,
+                'B2': self.neuralnet.B2
+            }, open(p_name, 'wb'))
         return
         
     
@@ -234,31 +288,19 @@ class Trainer:
         loader = pickle.load(open(filename, 'rb'))
         self.neuralnet.U = loader['U']
         self.neuralnet.W = loader['W']
+        self.neuralnet.B1 = loader['B1']
+        self.neuralnet.B2 = loader['B2']
+        self.neuralnet.hidden_layer_size = loader['n']
+        self.neuralnet._edge_vector_dim = loader['d']
         
     def Test(self, sentenceObj, dcsObj):
         neuralnet = self.neuralnet
         minScore = np.inf
         minMst = None
         
-        # startT = time.time()
-        try:
-            (nodelist, nodelist_correct, _) = GetTrainingKit(sentenceObj, dcsObj)
-            # nodelist = GetNodes(sentenceObj)
-        except IndexError:
-            print('\x1b[31mError with {} \x1b[0m'.format(sentenceObj.sent_id))
-            return (0, 0, 0)
-            
-        conflicts_Dict = Get_Conflicts(nodelist)
-        conflicts_Dict_correct = Get_Conflicts(nodelist_correct)
-        
-        # print('Load Nodelist + GetConflicts Time: ', time.time() - startT)
-        # startT = time.time()
-        
-        featVMat = Get_Feat_Vec_Matrix(nodelist, conflicts_Dict)
-        featVMat_correct = Get_Feat_Vec_Matrix(nodelist_correct, conflicts_Dict_correct)
-        
-        # print('Get Edge Features Time: ', time.time() - startT)
-        # startT = time.time()
+        dsbz2_name = sentenceObj.sent_id + '.ds.bz2'
+        (nodelist_correct, conflicts_Dict_correct, featVMat_correct, nodelist_to_correct_mapping,\
+            nodelist, conflicts_Dict, featVMat) = open_dsbz2('../NewData/skt_dcs_DS.bz2_10K/' + dsbz2_name)
         
         if not self.neuralnet.outer_relu:
             (WScalarMat, SigmoidGateOutput) = Get_W_Scalar_Matrix_from_FeatVect_Matrix(featVMat, nodelist, conflicts_Dict, neuralnet)
@@ -303,21 +345,14 @@ class Trainer:
     
     def Train(self, sentenceObj, dcsObj, _debug = True):
         # Hyperparameter for hinge loss: m
-        M_hinge = 14
         
-        """ Pre-Process DCS and SKT to get all Nodes etc. """
-        try:
-            (nodelist, nodelist_correct, nodelist_to_correct_mapping) = GetTrainingKit(sentenceObj, dcsObj)
-        except IndexError as e:
-            # print('\x1b[31mError with {} \x1b[0m'.format(sentenceObj.sent_id))
-            # print(e)
-            return
+        dsbz2_name = sentenceObj.sent_id + '.ds.bz2'
+        (nodelist_correct, conflicts_Dict_correct, featVMat_correct, nodelist_to_correct_mapping,\
+            nodelist, conflicts_Dict, featVMat) = open_dsbz2('../NewData/skt_dcs_DS.bz2_10K/' + dsbz2_name)
         
         """ FORM MAXIMUM(ENERGY) SPANNING TREE OF THE GOLDEN GRAPH : WORST GOLD STRUCTURE """
-        if not self.neuralnet.outer_relu:
-            raise Exception('Support for Non-outer-relu removed')
-        else:
-            (conflicts_Dict_correct, featVMat_correct, WScalarMat_correct) = GetGraph(nodelist_correct, self.neuralnet)
+        WScalarMat_correct = Get_W_Scalar_Matrix_from_FeatVect_Matrix(featVMat_correct, nodelist_correct,\
+                                                                      conflicts_Dict_correct, self.neuralnet)
         source = 0
         
         """ Find the max spanning tree : negative Weight matrix passed """
@@ -334,15 +369,11 @@ class Trainer:
         
         """ Delta(Margin) Function : MASK FOR WHICH NODES IN NODELIST BELONG TO DCS """
         gold_nodes_mask = np.array([False]*len(nodelist))
-        for i in range(len(nodelist_correct)):
-            gold_nodes_mask[nodelist_to_correct_mapping[nodelist_correct[i].id]] = True
+        gold_nodes_mask[list(nodelist_to_correct_mapping.values())] = True
         margin_f = lambda nodes_mask: np.sum(nodes_mask&gold_nodes_mask)**1.7
         
         """ FOR ALL POSSIBLE MST FROM THE COMPLETE GRAPH """
-        if not self.neuralnet.outer_relu:
-            raise Exception('Support for Non-outer-relu removed')
-        else:
-            (conflicts_Dict, featVMat, WScalarMat) = GetGraph(nodelist, self.neuralnet)
+        WScalarMat = Get_W_Scalar_Matrix_from_FeatVect_Matrix(featVMat, nodelist, conflicts_Dict, self.neuralnet)
 
         """ For each node - Find MST with that source"""
         min_STx = None # Min Energy spanning tree with worst margin with gold_STx
@@ -365,31 +396,18 @@ class Trainer:
         doBpp = False
         
         Total_Loss = energy_gold_max_ST - min_marginalized_energy
-#         print('Total Loss: ', Total_Loss)
         if Total_Loss > 0:
-            doBpp = True
             dLdOut = np.zeros_like(WScalarMat)
-            
-            if not self.neuralnet.outer_relu:
-                # For new loss function with sigmoid on neuralnet
-                raise Exception('Support for relu has been removed')
-            else:
-                # For new loss function with ReLU on neuralnet
-                dLdOut[max_st_adj_gold] = 1
-                dLdOut[min_STx] = -1
-
-        if doBpp:
+            dLdOut[max_st_adj_gold] = 1
+            dLdOut[min_STx] = -1
             if _debug:
                 print('{}. '.format(sentenceObj.sent_id), end = '')
             self.neuralnet.Back_Prop(dLdOut, len(nodelist), featVMat, _debug)
         else:
-            trainingStatus[sentenceObj.sent_id] = True # Means tranining done on this file
-            #print('Don\'t do BPP')
-            pass
+            trainingStatus[sentenceObj.sent_id] = True
         
-        Total_Loss /= len(nodelist)
         self.history[sentenceObj.sent_id].append(Total_Loss)
-#         print("\nFileKey: %s, Loss: %6.3f, Loss2: %6.3f" % (sentenceObj.sent_id, Total_Loss, Loss_2))
+#         print("\nFileKey: %s, Loss: %6.3f" % (sentenceObj.sent_id, Total_Loss))
 
 trainer = None
 def InitModule(_matDB):
@@ -403,6 +421,17 @@ def InitModule(_matDB):
 ################################################################################################
 """
 if __name__ == '__main__':
+    """
+    ################################################################################################
+    ##############################  GET A FILENAME TO SAVE WEIGHTS  ################################
+    ################################################################################################
+    """
+    st = str(int((time.time() * 1e6) % 1e13))
+    log_name = 'logs/train_nnet_t{}.out'.format(st)
+    p_name = 'outputs/train_nnet_t{}.p'.format(st)
+    print('nEURAL nET wILL bE sAVED hERE: ', p_name)
+
+
     loaded_SKT = pickle.load(open('../Simultaneous_CompatSKT_10K.p', 'rb'))
     loaded_DCS = pickle.load(open('../Simultaneous_DCS_10K.p', 'rb'))
 
