@@ -22,6 +22,8 @@ def pooled_Test(modelFile, vpid, queue, filePerProcess = 100):
         fn = fn.replace('.ds.bz2', '.p2')
         sentenceObj = loaded_SKT[fn]
         dcsObj = loaded_DCS[fn]
-        queue.put(trainer.Test(sentenceObj, dcsObj))
+        results = trainer.Test(sentenceObj, dcsObj)
+        if results is not None:
+            queue.put(results)
 
     print('Child process with vpid:{}, pid:{} closed.'.format(vpid, os.getpid()))

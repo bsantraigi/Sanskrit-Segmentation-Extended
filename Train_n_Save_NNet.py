@@ -302,6 +302,9 @@ class Trainer:
         (nodelist_correct, conflicts_Dict_correct, featVMat_correct, nodelist_to_correct_mapping,\
             nodelist, conflicts_Dict, featVMat) = open_dsbz2('../NewData/skt_dcs_DS.bz2_10K/' + dsbz2_name)
         
+        if len(nodelist) <= 50:
+            return None
+
         if not self.neuralnet.outer_relu:
             (WScalarMat, SigmoidGateOutput) = Get_W_Scalar_Matrix_from_FeatVect_Matrix(featVMat, nodelist, conflicts_Dict, neuralnet)
         else:

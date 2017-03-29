@@ -170,6 +170,31 @@ def MST(nodelist, WScalarMat, conflicts_Dict, source):
 
     return (mst_nodes, mst_adj_graph, mst_nodes_bool)
 
+def RandomST_GoldOnly(nodelist, WScalarMat, conflicts_Dict, source):
+    (mst_nodes, mst_adj_graph, mst_nodes_bool) = MST(nodelist, WScalarMat, conflicts_Dict, source)
+
+    mst_adj_graph = np.zeros_like(mst_adj_graph)
+    nodelen = len(nodelist)
+    
+    ## Random MST
+    free_set = list(range(nodelen))
+    full_set = list(range(nodelen))
+    st_set = []
+    start_node = np.random.randint(nodelen)
+    st_set.append(start_node)
+    free_set.remove(start_node)
+    for x in range(nodelen - 1):
+        a = free_set[np.random.randint(len(free_set))]
+        b = st_set[np.random.randint(len(st_set))]
+        if a not in st_set:
+            st_set.append(a)
+            free_set.remove(a)
+        mst_adj_graph[a, b] = 1
+        mst_adj_graph[b, a] = 1
+    
+    return (mst_nodes, mst_adj_graph, mst_nodes_bool)
+
+
 def GetMSTWeight(mst_nodes, _WScalarMat):
     sol_lemmas = []
     sol_cngs = []
