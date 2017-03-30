@@ -186,13 +186,13 @@ def RandomST_GoldOnly(nodelist, WScalarMat, conflicts_Dict, source):
     st_set.append(start_node)
     free_set.remove(start_node)
     for x in range(nodelen - 1):
-        a = free_set[np.random.randint(len(free_set))]
-        b = st_set[np.random.randint(len(st_set))]
-        if a not in st_set:
-            st_set.append(a)
-            free_set.remove(a)
+        a = st_set[np.random.randint(len(st_set))]
+        b = free_set[np.random.randint(len(free_set))]        
+        if b not in st_set:
+            st_set.append(b)
+            free_set.remove(b)
         mst_adj_graph[a, b] = 1
-        mst_adj_graph[b, a] = 1
+        # mst_adj_graph[b, a] = 1 # Directed Spanning tree
     
     return (mst_nodes, mst_adj_graph, mst_nodes_bool)
 
