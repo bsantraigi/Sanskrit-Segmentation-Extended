@@ -96,11 +96,11 @@ class NN:
             raise Exception('Support for Non-Outer_Relu removed')
             return
         else:
-            etaW = 3e-5
-            etaB1 = 1e-5
+            etaW = 3e-4
+            etaB1 = 1e-4
             
-            etaU = 1e-5
-            etaB2 = 1e-5
+            etaU = 1e-4
+            etaB2 = 1e-4
             
             batch_size = 0
             for i in range(N):

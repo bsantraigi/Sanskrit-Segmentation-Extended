@@ -130,6 +130,8 @@ class Heap:
 ################################################################################################
 """
 def MST(nodelist, WScalarMat, conflicts_Dict, source):
+    # WTF Dude!!! This function should not be used... It is running Prim's on a directed graph!!!
+    # Doesn't return MST
     mst_adj_graph = np.ndarray(WScalarMat.shape, np.bool)*False
     # Reset nodes and put ids
     for id in range(len(nodelist)):
@@ -159,7 +161,7 @@ def MST(nodelist, WScalarMat, conflicts_Dict, source):
         mst_nodes[nextNode.chunk_id].append(nextNode)
         if nextNode.src != -1:
             mst_adj_graph[nextNode.src, nextNode.id] = True
-            mst_adj_graph[nextNode.id, nextNode.src] = True
+            # mst_adj_graph[nextNode.id, nextNode.src] = True
         nid = nextNode.id
         for conId in conflicts_Dict[nid]:
             h.Delete(nodelist[conId])
@@ -195,12 +197,5 @@ def RandomST_GoldOnly(nodelist, WScalarMat, conflicts_Dict, source):
     return (mst_nodes, mst_adj_graph, mst_nodes_bool)
 
 
-def GetMSTWeight(mst_nodes, _WScalarMat):
-    sol_lemmas = []
-    sol_cngs = []
-    total_tree_weight = 0
-    for key, val in mst_nodes.items():
-        for node in val:
-            if node.src != -1:
-                total_tree_weight += _WScalarMat[node.src][node.id]
-    return total_tree_weight
+def GetMSTWeight(mst_adj_graph, WScalarMat):
+    return np.sum(WScalarMat[mst_adj_graph])

@@ -293,17 +293,17 @@ class Trainer:
         self.neuralnet.hidden_layer_size = loader['n']
         self.neuralnet._edge_vector_dim = loader['d']
         
-    def Test(self, sentenceObj, dcsObj):
+    def Test(self, sentenceObj, dcsObj, dsbz2_name):
         neuralnet = self.neuralnet
         minScore = np.inf
         minMst = None
         
-        dsbz2_name = sentenceObj.sent_id + '.ds.bz2'
+        # dsbz2_name = sentenceObj.sent_id + '.ds.bz2'
         (nodelist_correct, conflicts_Dict_correct, featVMat_correct, nodelist_to_correct_mapping,\
-            nodelist, conflicts_Dict, featVMat) = open_dsbz2('../NewData/skt_dcs_DS.bz2_10K/' + dsbz2_name)
+            nodelist, conflicts_Dict, featVMat) = open_dsbz2(dsbz2_name)
         
-        if len(nodelist) <= 50:
-            return None
+        # if len(nodelist) > 50:
+        #     return None
 
         if not self.neuralnet.outer_relu:
             (WScalarMat, SigmoidGateOutput) = Get_W_Scalar_Matrix_from_FeatVect_Matrix(featVMat, nodelist, conflicts_Dict, neuralnet)
@@ -317,7 +317,7 @@ class Trainer:
         for source in range(len(nodelist)):
             (mst_nodes, mst_adj_graph, _) = MST(nodelist, WScalarMat, conflicts_Dict, source)
             # print('.', end = '')
-            score = GetMSTWeight(mst_nodes, WScalarMat)
+            score = GetMSTWeight(mst_adj_graph, WScalarMat)
             if(score < minScore):
                 minScore = score
                 minMst = mst_nodes
