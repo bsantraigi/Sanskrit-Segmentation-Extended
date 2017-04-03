@@ -210,3 +210,114 @@ def FullCoverage(skt, dcs):
             break
 #     print(goodFlag)
     return goodFlag
+
+def GetFeatNameSet():
+    mat_cngCount_1D = pickle.load(open('../NewData/gauravs/Temporary_1D/mat_cngCount_1D.p', 'rb'), encoding = u'utf-8')
+
+    _full_cnglist = list(mat_cngCount_1D)
+    _cg_count = len(mat_cngCount_1D)
+
+    feats = {}
+    fIndex = 0
+    feats[fIndex] = ('L', 'L'); fIndex += 1;
+    feats[fIndex] = ('L', 'C'); fIndex += 1;
+    feats[fIndex] = ('L', 'T'); fIndex += 1;
+
+    feats[fIndex] = ('C', 'L'); fIndex += 1;
+    feats[fIndex] = ('C', 'C'); fIndex += 1;
+    feats[fIndex] = ('C', 'T'); fIndex += 1;
+
+    feats[fIndex] = ('T', 'L'); fIndex += 1;
+    feats[fIndex] = ('T', 'C'); fIndex += 1;
+    feats[fIndex] = ('T', 'T'); fIndex += 1;
+
+    # Path Constraint - Length 2 - # _cg_count
+
+    # LEMMA->CNG->LEMMA
+    for k in range(0, _cg_count):
+        cng_k = _full_cnglist[k]
+        feats[fIndex + k] = ('L', cng_k, 'L')
+    fIndex += _cg_count
+
+    # LEMMA->CNG->CNG
+    for k in range(0, _cg_count):
+        cng_k = _full_cnglist[k]
+        feats[fIndex + k] = ('L', cng_k, 'C')
+    fIndex += _cg_count
+
+    # LEMMA->CNG->TUP
+    for k in range(0, _cg_count):
+        cng_k = _full_cnglist[k]
+        feats[fIndex + k] = ('L', cng_k, 'T')
+    fIndex += _cg_count
+
+    # CNG->CNG->LEMMA
+    for k in range(0, _cg_count):
+        cng_k = _full_cnglist[k]
+        feats[fIndex + k] = ('C', cng_k, 'L')
+    fIndex += _cg_count
+
+    # CNG->CNG->CNG
+    for k in range(0, _cg_count):
+        cng_k = _full_cnglist[k]
+        feats[fIndex + k] = ('C', cng_k, 'C')
+    fIndex += _cg_count
+
+    # CNG->CNG->TUP
+    for k in range(0, _cg_count):
+        cng_k = _full_cnglist[k]
+        feats[fIndex + k] = ('C', cng_k, 'T')
+    fIndex += _cg_count
+
+    # TUP->CNG->LEMMA :: TOO MANY ZEROS
+    for k in range(0, _cg_count):
+        cng_k = _full_cnglist[k]
+        feats[fIndex + k] = ('T', cng_k, 'L')
+    fIndex += _cg_count
+
+    # TUP->CNG->CNG :: TOO MANY ZEROS
+    for k in range(0, _cg_count):
+        cng_k = _full_cnglist[k]
+        feats[fIndex + k] = ('T', cng_k, 'C')
+    fIndex += _cg_count
+
+    # TUP->CNG->TUP :: TOO MANY ZEROS
+    for k in range(0, _cg_count):
+        cng_k = _full_cnglist[k]
+        feats[fIndex + k] = ('T', cng_k, 'T')
+    fIndex += _cg_count
+
+    # Path Constraint - Length 3 - # _cg_count^2
+
+    # LEMMA->CGS->CGS->LEMMA
+    for k1 in range(0, _cg_count):
+        cng_k1 = _full_cnglist[k1]
+        for k2 in range(0, _cg_count): 
+            cng_k2 = _full_cnglist[k2]
+            feats[fIndex + k1*_cg_count + k2] = ('L', cng_k1, cng_k2, 'L')
+    fIndex += _cg_count**2
+
+    # LEMMA->CGS->CGS->TUP
+    for k1 in range(0, _cg_count):
+        cng_k1 = _full_cnglist[k1]
+        for k2 in range(0, _cg_count): 
+            cng_k2 = _full_cnglist[k2]
+            feats[fIndex + k1*_cg_count + k2] = ('L', cng_k1, cng_k2, 'T')
+    fIndex += _cg_count**2
+
+    # TUP->CGS->CGS->LEM
+    for k1 in range(0, _cg_count):
+        cng_k1 = _full_cnglist[k1]
+        for k2 in range(0, _cg_count): 
+            cng_k2 = _full_cnglist[k2]
+            feats[fIndex + k1*_cg_count + k2] = ('T', cng_k1, cng_k2, 'L')
+    fIndex += _cg_count**2
+
+    # TUP->CGS->CGS->TUP
+    for k1 in range(0, _cg_count):
+        cng_k1 = _full_cnglist[k1]
+        for k2 in range(0, _cg_count): 
+            cng_k2 = _full_cnglist[k2]
+            feats[fIndex + k1*_cg_count + k2] = ('T', cng_k1, cng_k2, 'T')
+    fIndex += _cg_count**2
+    return feats

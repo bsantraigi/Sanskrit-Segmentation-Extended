@@ -71,6 +71,14 @@ class NN:
         #   log is applied after the neural network
         self.outer_relu = outer_relu
 
+
+        # Learning Rates
+        self.etaW = None
+        self.etaB1 = None
+        
+        self.etaU = None
+        self.etaB2 = None
+
     def Forward_Prop(self, x):
         z2 = np.matmul(self.W, x) + self.B1
         a2 = lrelu(z2)
@@ -96,11 +104,14 @@ class NN:
             raise Exception('Support for Non-Outer_Relu removed')
             return
         else:
-            etaW = 3e-4
-            etaB1 = 1e-4
+            etaW = self.etaW
+            etaB1 = self.etaB1
             
-            etaU = 1e-4
-            etaB2 = 1e-4
+            etaU = self.etaU
+            etaB2 = self.etaB2
+
+            if (etaW is None) or (etaB1 is None) or (etaU is None) or (etaB2 is None):
+                raise Exception('Learning Rates Not Set...')
             
             batch_size = 0
             for i in range(N):
