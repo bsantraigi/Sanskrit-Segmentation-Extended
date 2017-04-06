@@ -3,28 +3,26 @@ IMPORTS
 """
 
 ## bUILT-iN pACKAGES
-import time
-import sys
-import pickle
+import sys, os, time, bz2, zlib, pickle, math, json, csv
 from collections import defaultdict
-import json
 import numpy as np
-import math
 import matplotlib.pyplot as plt
 np.set_printoptions(suppress=True)
 from IPython.display import display
-import bz2
 
 ## lAST sUMMER
 from romtoslp import *
 from sentences import *
 from DCS import *
-
-## tHIS sUMMER
 import MatDB
-import word_definite as WD
 from heap_n_PrimMST import *
+
+
+## lAST yEAR
+# from word_definite import *
 from nnet import *
+# from heap_n_PrimMST import *
+# from word_definite import *
 
 """
 ################################################################################################
@@ -124,7 +122,7 @@ trainingStatus = defaultdict(lambda: bool(False))
 ################################################################################################
 """
 
-def train(loaded_SKT, loaded_DCS, n_trainset = -1, iterationPerBatch = 10, filePerBatch = 20, _debug = True):
+def train_generator(loaded_SKT, loaded_DCS, bz2_input_folder, n_trainset = -1, iterationPerBatch = 10, filePerBatch = 20, _debug = True):
     # Train
     if n_trainset == -1:
         n_trainset = len(TrainFiles)
@@ -132,35 +130,39 @@ def train(loaded_SKT, loaded_DCS, n_trainset = -1, iterationPerBatch = 10, fileP
     else:
         totalBatchToTrain = math.ceil(n_trainset/filePerBatch)
     
-    
+    print('Total Batches to go: ', totalBatchToTrain)
     for iterout in range(totalBatchToTrain):
         # Add timer
         startT = time.time()
-        
+
         # Change current batch
         trainer.Save(p_name)
         print('Batch: ', iterout)
         files_for_batch = TrainFiles[iterout*filePerBatch:(iterout + 1)*filePerBatch]
         print(files_for_batch)
         # trainer.Load('outputs/neuralnet_trained.p')
-        
-        # Run few times on same set of files
-        for iterin in range(iterationPerBatch):
-            print('ITERATION IN', iterin)        
-            for fn in files_for_batch:
-                trainFileName = fn.replace('.ds.bz2', '.p2')
-                sentenceObj = loaded_SKT[trainFileName]
-                dcsObj = loaded_DCS[trainFileName]
-                if trainingStatus[sentenceObj.sent_id]:
-                    continue
-                # trainer.Save('outputs/saved_trainer.p')
-                try:
-                    trainer.Train(sentenceObj, dcsObj, _debug)
-                except (IndexError, KeyError) as e:
-                    print('\x1b[31mFailed: {} \x1b[0m'.format(sentenceObj.sent_id))
-            sys.stdout.flush() # Flush IO buffer 
-        finishT = time.time()
-        print('Avg. time taken by 1 file(1 iteration): {:.3f}'.format((finishT - startT)/(iterationPerBatch*filePerBatch)))
+        try:
+            # Run few times on same set of files
+            for iterin in range(iterationPerBatch):
+                print('ITERATION IN', iterin)        
+                for fn in files_for_batch:
+                    trainFileName = fn.replace('.ds.bz2', '.p2')
+                    sentenceObj = loaded_SKT[trainFileName]
+                    dcsObj = loaded_DCS[trainFileName]
+                    if trainingStatus[sentenceObj.sent_id]:
+                        continue
+                    # trainer.Save('outputs/saved_trainer.p')
+                    try:
+                        trainer.Train(sentenceObj, dcsObj, bz2_input_folder, _debug)
+                    except (IndexError, KeyError) as e:
+                        print('\x1b[31mFailed: {} \x1b[0m'.format(sentenceObj.sent_id))
+                sys.stdout.flush() # Flush IO buffer 
+            finishT = time.time()
+            print('Avg. time taken by 1 file(1 iteration): {:.3f}'.format((finishT - startT)/(iterationPerBatch*filePerBatch)))
+        except KeyboardInterrupt:
+            print('Training paused')
+            trainer.Save(p_name)
+            yield 'Hi'
     trainer.Save(p_name)
     
     sys.stdout.flush() # Flush IO buffer 
@@ -245,7 +247,7 @@ def GetLoss(_mst_adj_graph, _mask_de_correct_edges, _WScalarMat):
 class Trainer:
     def __init__(self, modelFile = None):
         if modelFile is None:
-            self.hidden_layer_size = 300
+            self.hidden_layer_size = 800
             self._edge_vector_dim = 1000
             # self._edge_vector_dim = WD._edge_vector_dim
             # self._full_cnglist = list(WD.mat_cngCount_1D)
@@ -266,6 +268,13 @@ class Trainer:
             self.neuralnet.B2 = loader['B2']
             
             self.history = defaultdict(lambda: list())
+            
+        # SET LEARNING RATES
+        self.neuralnet.etaW = 3e-4
+        self.neuralnet.etaB1 = 1e-4
+        
+        self.neuralnet.etaU = 1e-4
+        self.neuralnet.etaB2 = 1e-4
             
     def Reset(self):
         self.neuralnet = NN(self._edge_vector_dim, self.hidden_layer_size)
@@ -346,20 +355,27 @@ class Trainer:
 #               format(word_match, lemma_match, len(dcsLemmas), len(nodelist)))
         return (word_match, lemma_match, len(dcsLemmas), n_output_nodes)
     
-    def Train(self, sentenceObj, dcsObj, _debug = True):
+    def Train(self, sentenceObj, dcsObj, bz2_input_folder, _debug = True):
         # Hyperparameter for hinge loss: m
+        m_hinge_param = 14
         
         dsbz2_name = sentenceObj.sent_id + '.ds.bz2'
         (nodelist_correct, conflicts_Dict_correct, featVMat_correct, nodelist_to_correct_mapping,\
-            nodelist, conflicts_Dict, featVMat) = open_dsbz2('../NewData/skt_dcs_DS.bz2_10K/' + dsbz2_name)
+            nodelist, conflicts_Dict, featVMat) = open_dsbz2(bz2_input_folder + dsbz2_name)
+        
+        # Train for large graphs separately
+#         if len(nodelist) < 40:
+#             return
         
         """ FORM MAXIMUM(ENERGY) SPANNING TREE OF THE GOLDEN GRAPH : WORST GOLD STRUCTURE """
         WScalarMat_correct = Get_W_Scalar_Matrix_from_FeatVect_Matrix(featVMat_correct, nodelist_correct,\
                                                                       conflicts_Dict_correct, self.neuralnet)
         source = 0
-        
         """ Find the max spanning tree : negative Weight matrix passed """
-        (max_st_gold_ndict, max_st_adj_gold_small, _) = MST(nodelist_correct, -WScalarMat_correct, conflicts_Dict_correct, source)
+#         (max_st_gold_ndict, max_st_adj_gold_small, _) =\
+#             MST(nodelist_correct, -WScalarMat_correct, conflicts_Dict_correct, source)
+        (max_st_gold_ndict, max_st_adj_gold_small, _) =\
+            MST(nodelist_correct, -WScalarMat_correct, conflicts_Dict_correct, source)
         energy_gold_max_ST = np.sum(WScalarMat_correct[max_st_adj_gold_small])
         
         """ Convert correct spanning tree graph adj matrix to full marix dimensions """
@@ -368,12 +384,13 @@ class Trainer:
         max_st_adj_gold = np.ndarray((nodelen, nodelen), np.bool)*False # T_STAR
         for i in range(max_st_adj_gold_small.shape[0]):
             for j in range(max_st_adj_gold_small.shape[1]):
-                max_st_adj_gold[nodelist_to_correct_mapping[i], nodelist_to_correct_mapping[j]] = max_st_adj_gold_small[i, j]
+                max_st_adj_gold[nodelist_to_correct_mapping[i], nodelist_to_correct_mapping[j]] =\
+                    max_st_adj_gold_small[i, j]
         
         """ Delta(Margin) Function : MASK FOR WHICH NODES IN NODELIST BELONG TO DCS """
         gold_nodes_mask = np.array([False]*len(nodelist))
         gold_nodes_mask[list(nodelist_to_correct_mapping.values())] = True
-        margin_f = lambda nodes_mask: np.sum(nodes_mask&gold_nodes_mask)**1.7
+        margin_f = lambda nodes_mask: np.sum(nodes_mask&(~gold_nodes_mask))**2
         
         """ FOR ALL POSSIBLE MST FROM THE COMPLETE GRAPH """
         WScalarMat = Get_W_Scalar_Matrix_from_FeatVect_Matrix(featVMat, nodelist, conflicts_Dict, self.neuralnet)
@@ -382,17 +399,28 @@ class Trainer:
         min_STx = None # Min Energy spanning tree with worst margin with gold_STx
         min_marginalized_energy = np.inf
         
+        # Generate random set of nodes from which mSTs are to be considered
+        n_nodes = len(nodelist)
+        selection_prob = 0.4
+        select_flag = np.random.rand(n_nodes) < selection_prob
+        # Fix if all zeros
+        if np.sum(select_flag) == 0:
+            select_flag[np.random.randint(n_nodes)] = 1
+        
         for source in range(len(nodelist)):
             (mst_nodes, mst_adj_graph, mst_nodes_bool) = MST(nodelist, WScalarMat, conflicts_Dict, source) # T_X
             # print('.', end = '')
            
-            marginalized_dist = np.sum(WScalarMat[mst_adj_graph]) - margin_f(mst_nodes_bool)
-            if marginalized_dist < min_marginalized_energy:
-                min_marginalized_energy = marginalized_dist
+            marginalized_en = np.sum(WScalarMat[mst_adj_graph]) - margin_f(mst_nodes_bool)
+            # Minimum marginalized spanning tree : Randomization applied
+            # if marginalized_en < min_marginalized_energy and select_flag[source]:
+            if marginalized_en < min_marginalized_energy:
+                min_marginalized_energy = marginalized_en
                 min_STx = mst_adj_graph
             # Energy diff should all be negative
-#             print('Source: [{}], Del:{}, Energy_margin: {:.3f}, Energy: {:.3f}, GE:{:.3f}'.\
-#                   format(source, margin_f(mst_nodes_bool), marginalized_dist,  np.sum(WScalarMat[mst_adj_graph]), energy_gold_max_ST))
+            if _debug:
+                print('Source: [{}], Node_Diff:{}, Max_Gold_En: {:.3f}, Energy: {:.3f}'.\
+                      format(source, np.sum((~gold_nodes_mask)&mst_nodes_bool), energy_gold_max_ST,  np.sum(WScalarMat[mst_adj_graph])))
 
         """ Gradient Descent """
         # FOR MOST OFFENdING Y
@@ -401,21 +429,21 @@ class Trainer:
         Total_Loss = energy_gold_max_ST - min_marginalized_energy
         if Total_Loss > 0:
             dLdOut = np.zeros_like(WScalarMat)
-            dLdOut[max_st_adj_gold] = 1
-            dLdOut[min_STx] = -1
+            dLdOut[max_st_adj_gold&(~min_STx)] = 1
+            dLdOut[(~max_st_adj_gold)&min_STx] = -1
             if _debug:
                 print('{}. '.format(sentenceObj.sent_id), end = '')
             self.neuralnet.Back_Prop(dLdOut, len(nodelist), featVMat, _debug)
         else:
             trainingStatus[sentenceObj.sent_id] = True
-        
-        self.history[sentenceObj.sent_id].append(Total_Loss)
-#         print("\nFileKey: %s, Loss: %6.3f" % (sentenceObj.sent_id, Total_Loss))
+        if _debug:
+            print("\nFileKey: %s, Loss: %6.3f" % (sentenceObj.sent_id, Total_Loss))
 
+TrainFiles = None
 trainer = None
-def InitModule(_matDB):
-    global WD, trainer
-    WD.word_definite_extInit(_matDB)
+p_name = ''
+def InitModule():
+    global trainer
     trainer = Trainer()
 
 """
@@ -423,7 +451,8 @@ def InitModule(_matDB):
 ################################################################################################
 ################################################################################################
 """
-if __name__ == '__main__':
+def main():
+    global TrainFiles, p_name
     """
     ################################################################################################
     ##############################  GET A FILENAME TO SAVE WEIGHTS  ################################
@@ -433,34 +462,45 @@ if __name__ == '__main__':
     log_name = 'logs/train_nnet_t{}.out'.format(st)
     p_name = 'outputs/train_nnet_t{}.p'.format(st)
     print('nEURAL nET wILL bE sAVED hERE: ', p_name)
+    
+    # Create Training File List
+    excluded_files = []
+    with open('inputs/Baseline4_advSample.csv', 'r') as f_handle:
+        opener = csv.reader(f_handle)
+        for line in opener:
+            excluded_files.append(line[1].replace('.p', '.ds.bz2'))
 
+    bz2_input_folder = '/home/rs/15CS91R05/vishnu/Data/skt_dcs_DS.bz2_compat_10k_csv/'
+    all_files = []
+    skipped = 0
+    for f in os.listdir(bz2_input_folder):
+        if '.ds.bz2' in f:
+            if f in excluded_files:
+                skipped += 1
+                continue
+            all_files.append(f)
 
-    loaded_SKT = pickle.load(open('../Simultaneous_CompatSKT_10K.p', 'rb'))
-    loaded_DCS = pickle.load(open('../Simultaneous_DCS_10K.p', 'rb'))
+    print(skipped, 'files will not be used for training')
+    print('Size of training set:', len(all_files))
+    
+    TrainFiles = all_files
+    
+    # Load Simultaneous files
+    print('Loading Large Files')
+    loaded_SKT = pickle.load(open('../Simultaneous_CompatSKT.p', 'rb'), encoding=u'utf-8')
+    loaded_DCS = pickle.load(open('../Simultaneous_DCS.p', 'rb'), encoding=u'utf-8')
+    
+    InitModule()
+    trainingStatus = defaultdict(lambda: bool(False))
+    
+    train = train_generator(loaded_SKT, loaded_DCS, bz2_input_folder, n_trainset = -1, filePerBatch = 10, iterationPerBatch = 5, _debug=False)
+    
+    # Complete Training
+    # tips: try increasing iterations per batch
+    trainingStatus = defaultdict(lambda: bool(False)) # Reset it after 3 epochs of full-training set
+    train.__next__()
 
-    dataset_4k_1k = pickle.load(open('../SmallDataset_4K_1K.p', 'rb'))
-    TrainFiles = dataset_4k_1k['TrainFiles']
-    TestFiles = dataset_4k_1k['TestFiles']
-
-    dataset_6k_3k = pickle.load(open('../SmallDataset_6K_3K.p', 'rb'))
-    TrainFiles_2 = dataset_6k_3k['TrainFiles']
-    TestFiles_2 = dataset_6k_3k['TestFiles']
-
-    matDB = MatDB.MatDB()
-    InitModule(matDB)
-
-    print('PRE-TRAIN ACCURACIES:')
-    _ = test(loaded_SKT, loaded_DCS, n_testSet = 1000, _testFiles = TestFiles, n_checkpt = 100)
-
-    print('TRAINING ROUND 1::')
-    train(loaded_SKT, loaded_DCS, n_trainset = 1000, filePerBatch = 20, iterationPerBatch = 8, _debug=False)
-
-    print('POST-TRAIN ACCURACIES:')
-    _ = test(loaded_SKT, loaded_DCS, n_testSet = 1000, _testFiles = TestFiles, n_checkpt = 100)
-
-    # print('TRAINING ROUND 2::')
-    # train(loaded_SKT, loaded_DCS, 1000, _debug = False)
-
-    print('POST-TRAIN ACCURACIES DIFF SET:')
-    _ = test(loaded_SKT, loaded_DCS, n_testSet = 3000, _testFiles = TestFiles_2, n_checkpt = 100)
-    # print ("Not Implemented")
+    print('Training Complete')
+    
+if __name__ == '__main__':
+    main()
