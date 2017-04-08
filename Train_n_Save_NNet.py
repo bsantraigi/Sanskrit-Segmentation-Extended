@@ -16,13 +16,11 @@ from sentences import *
 from DCS import *
 import MatDB
 from heap_n_PrimMST import *
+from ECL_MST import *
 
-
-## lAST yEAR
-# from word_definite import *
+import word_definite as WD
+from heap_n_PrimMST import *
 from nnet import *
-# from heap_n_PrimMST import *
-# from word_definite import *
 
 """
 ################################################################################################
@@ -130,13 +128,16 @@ def train_generator(loaded_SKT, loaded_DCS, bz2_input_folder, n_trainset = -1, i
     else:
         totalBatchToTrain = math.ceil(n_trainset/filePerBatch)
     
-    print('Total Batches to go: ', totalBatchToTrain)
+    register_nnet(trainer.neuralnet, bz2_input_folder)
     for iterout in range(totalBatchToTrain):
         # Add timer
         startT = time.time()
 
         # Change current batch
-        trainer.Save(p_name)
+        if(iterout % 50 == 0):
+            trainer.Save(p_name.replace('.p', '_i{}.p'.format(iterout)))
+        else:
+            trainer.Save(p_name)
         print('Batch: ', iterout)
         files_for_batch = TrainFiles[iterout*filePerBatch:(iterout + 1)*filePerBatch]
         print(files_for_batch)
@@ -162,10 +163,8 @@ def train_generator(loaded_SKT, loaded_DCS, bz2_input_folder, n_trainset = -1, i
         except KeyboardInterrupt:
             print('Training paused')
             trainer.Save(p_name)
-            yield 'Hi'
+            yield None
     trainer.Save(p_name)
-    
-    sys.stdout.flush() # Flush IO buffer 
                 
 def test(loaded_SKT, loaded_DCS, n_testSet = -1, _testFiles = None, n_checkpt = 100):
     total_lemma = 0;
@@ -247,8 +246,8 @@ def GetLoss(_mst_adj_graph, _mask_de_correct_edges, _WScalarMat):
 class Trainer:
     def __init__(self, modelFile = None):
         if modelFile is None:
-            self.hidden_layer_size = 800
-            self._edge_vector_dim = 1000
+            self.hidden_layer_size = 1200
+            self._edge_vector_dim = 1500
             # self._edge_vector_dim = WD._edge_vector_dim
             # self._full_cnglist = list(WD.mat_cngCount_1D)
             
@@ -257,8 +256,8 @@ class Trainer:
         else:
             loader = pickle.load(open(filename, 'rb'))
             
-            self.neuralnet.hidden_layer_size = loader['n']
-            self.neuralnet._edge_vector_dim = loader['d']
+            self.neuralnet.n = loader['n']
+            self.neuralnet.d = loader['d']
 
             self.neuralnet = NN(self._edge_vector_dim, self.hidden_layer_size, outer_relu=True)
 
@@ -281,7 +280,7 @@ class Trainer:
         self.history = defaultdict(lambda: list())
         
     def Save(self, filename):
-        print('Weights Saved: ', p_name)
+        print('Weights Saved: ', filename)
         pickle.dump({
                 'U': self.neuralnet.U,
                 'W': self.neuralnet.W,
@@ -289,7 +288,7 @@ class Trainer:
                 'd': self.neuralnet.d,
                 'B1': self.neuralnet.B1,
                 'B2': self.neuralnet.B2
-            }, open(p_name, 'wb'))
+            }, open(filename, 'wb'))
         return
         
     
@@ -302,7 +301,7 @@ class Trainer:
         self.neuralnet.hidden_layer_size = loader['n']
         self.neuralnet._edge_vector_dim = loader['d']
         
-    def Test(self, sentenceObj, dcsObj, dsbz2_name):
+    def Test(self, sentenceObj, dcsObj, dsbz2_name, ecl_mst = False):
         neuralnet = self.neuralnet
         minScore = np.inf
         minMst = None
@@ -324,7 +323,10 @@ class Trainer:
         
         # Get all MST
         for source in range(len(nodelist)):
-            (mst_nodes, mst_adj_graph, _) = MST(nodelist, WScalarMat, conflicts_Dict, source)
+            if not ecl_mst:
+                (mst_nodes, mst_adj_graph, _) = MST(nodelist, WScalarMat, conflicts_Dict, source)
+            else:
+                (mst_nodes_bool,mst_nodes,mst_adj_graph)=MST_ECL(nodelist,WScalarMat,conflicts_Dict,source)
             # print('.', end = '')
             score = GetMSTWeight(mst_adj_graph, WScalarMat)
             if(score < minScore):
@@ -362,7 +364,6 @@ class Trainer:
         dsbz2_name = sentenceObj.sent_id + '.ds.bz2'
         (nodelist_correct, conflicts_Dict_correct, featVMat_correct, nodelist_to_correct_mapping,\
             nodelist, conflicts_Dict, featVMat) = open_dsbz2(bz2_input_folder + dsbz2_name)
-        
         # Train for large graphs separately
 #         if len(nodelist) < 40:
 #             return
@@ -442,9 +443,21 @@ class Trainer:
 TrainFiles = None
 trainer = None
 p_name = ''
+odir = ''
 def InitModule():
     global trainer
     trainer = Trainer()
+    
+def register_nnet(nnet, bz2_input_folder):
+    if not os.path.isdir(odir):
+        os.mkdir(odir)
+    if not os.path.isfile('outputs/nnet_LOGS.csv'):
+        with open('outputs/nnet_LOGS.csv', 'a') as fh:
+            csv_r = csv.writer(fh)
+            csv_r.writerow(['odir', 'p_name', 'hidden_layer_size', '_edge_vector_dim'])
+    with open('outputs/nnet_LOGS.csv', 'a') as fh:
+        csv_r = csv.writer(fh)
+        csv_r.writerow([odir, p_name, nnet.n, nnet.d, bz2_input_folder])
 
 """
 ################################################################################################
@@ -452,7 +465,7 @@ def InitModule():
 ################################################################################################
 """
 def main():
-    global TrainFiles, p_name
+    global TrainFiles, p_name, odir
     """
     ################################################################################################
     ##############################  GET A FILENAME TO SAVE WEIGHTS  ################################
@@ -460,7 +473,8 @@ def main():
     """
     st = str(int((time.time() * 1e6) % 1e13))
     log_name = 'logs/train_nnet_t{}.out'.format(st)
-    p_name = 'outputs/train_nnet_t{}.p'.format(st)
+    odir = 'outputs/train_t{}'.format(st)
+    p_name = 'outputs/train_t{}/nnet.p'.format(st)
     print('nEURAL nET wILL bE sAVED hERE: ', p_name)
     
     # Create Training File List
@@ -470,7 +484,8 @@ def main():
         for line in opener:
             excluded_files.append(line[1].replace('.p', '.ds.bz2'))
 
-    bz2_input_folder = '/home/rs/15CS91R05/vishnu/Data/skt_dcs_DS.bz2_compat_10k_csv/'
+    bz2_input_folder = '../NewData/skt_dcs_DS.bz2_1L_bigram_10K/'
+    # bz2_input_folder = '/home/rs/15CS91R05/vishnu/Data/skt_dcs_DS.bz2_compat_10k_check_again/'
     all_files = []
     skipped = 0
     for f in os.listdir(bz2_input_folder):
@@ -482,13 +497,13 @@ def main():
 
     print(skipped, 'files will not be used for training')
     print('Size of training set:', len(all_files))
-    
-    TrainFiles = all_files
+
+    TrainFiles = all_files    
     
     # Load Simultaneous files
     print('Loading Large Files')
-    loaded_SKT = pickle.load(open('../Simultaneous_CompatSKT.p', 'rb'), encoding=u'utf-8')
-    loaded_DCS = pickle.load(open('../Simultaneous_DCS.p', 'rb'), encoding=u'utf-8')
+    loaded_SKT = pickle.load(open('../Simultaneous_CompatSKT_10K.p', 'rb'), encoding=u'utf-8')
+    loaded_DCS = pickle.load(open('../Simultaneous_DCS_10K.p', 'rb'), encoding=u'utf-8')
     
     InitModule()
     trainingStatus = defaultdict(lambda: bool(False))
@@ -496,8 +511,6 @@ def main():
     train = train_generator(loaded_SKT, loaded_DCS, bz2_input_folder, n_trainset = -1, filePerBatch = 10, iterationPerBatch = 5, _debug=False)
     
     # Complete Training
-    # tips: try increasing iterations per batch
-    trainingStatus = defaultdict(lambda: bool(False)) # Reset it after 3 epochs of full-training set
     train.__next__()
 
     print('Training Complete')

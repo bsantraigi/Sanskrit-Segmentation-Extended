@@ -5,7 +5,6 @@ from collections import defaultdict
 import json
 import numpy as np
 import math
-import matplotlib.pyplot as plt
 np.set_printoptions(suppress=True)
 from IPython.display import display
 
@@ -36,9 +35,11 @@ else:
     outFolder = '../NewData/skt_dcs_DS.bz2/'
 
 conversion_file_list = list(loaded_DCS.keys())
+outFolder = '../NewData/skt_dcs_DS.bz2_4K_pmi_rfe_10K/'
 
 ## SPECIAL - HELD OUT DATASET - OVERWRITES
-outFolder = '../NewData/skt_dcs_DS.bz2_heldout_mifeats/'
+#'''
+outFolder = '../NewData/skt_dcs_DS.bz2_4K_pmi_rfe_heldout/'
 baseline_filelist = []
 with open('inputs/Baseline4_advSample.csv') as f:
     baseline_reader = csv.reader(f)
@@ -46,6 +47,7 @@ with open('inputs/Baseline4_advSample.csv') as f:
         baseline_filelist.append(line[1])
         
 conversion_file_list = [f.replace('.p', '.p2') for f in baseline_filelist]
+#'''
 ## SPECIAL CODE ENDS HERE
 
 
@@ -115,12 +117,6 @@ def GetGraph(nodelist, neuralnet):
 ##############################  GET A FILENAME TO SAVE WEIGHTS  ################################
 ################################################################################################
 """
-import time
-st = str(int((time.time() * 1e6) % 1e13))
-log_name = 'logs/train_nnet_t{}.out'.format(st)
-p_name = 'outputs/train_nnet_t{}.p'.format(st)
-print('nEURAL nET wILL bE sAVED hERE: ', p_name)
-
 trainingStatus = defaultdict(lambda: bool(False))
 
 class Trainer:
@@ -165,7 +161,8 @@ class Trainer:
 trainer = None
 def InitModule(_matDB):
     global WD, trainer
-    WD.word_definite_extInit(_matDB)
+    _edge_vec_dim = 2000
+    WD.word_definite_extInit(_matDB, _edge_vec_dim)
     trainer = Trainer()
 InitModule(matDB)
 trainingStatus = defaultdict(lambda: bool(False))
@@ -193,4 +190,7 @@ def save_all_bz2(loaded_SKT, loaded_DCS, n_checkpt = 100):
             pass
         file_counter += 1
 
+if not os.path.isdir(outFolder):
+    print('Creating directory: ', outFolder)
+    os.mkdir(outFolder)
 save_all_bz2(loaded_SKT, loaded_DCS, n_checkpt=100)
