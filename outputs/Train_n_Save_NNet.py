@@ -301,10 +301,7 @@ class Trainer:
         self.neuralnet.hidden_layer_size = loader['n']
         self.neuralnet._edge_vector_dim = loader['d']
         
-    def Test(self, sentenceObj, dcsObj, dsbz2_name, _dump = False, _outFolder = None):
-        if _dump:
-            if _outFolder is None:
-                raise Exception('WTH r u thinking! pass me outFolder')
+    def Test(self, sentenceObj, dcsObj, dsbz2_name, ecl_mst = False):
         neuralnet = self.neuralnet
         minScore = np.inf
         minMst = None
@@ -326,7 +323,10 @@ class Trainer:
         
         # Get all MST
         for source in range(len(nodelist)):
-            (mst_nodes, mst_adj_graph, _) = MST(nodelist, WScalarMat, conflicts_Dict, source)
+            if not ecl_mst:
+                (mst_nodes, mst_adj_graph, _) = MST(nodelist, WScalarMat, conflicts_Dict, source)
+            else:
+                (mst_nodes_bool,mst_nodes,mst_adj_graph)=MST_ECL(nodelist,WScalarMat,conflicts_Dict,source)
             # print('.', end = '')
             score = GetMSTWeight(mst_adj_graph, WScalarMat)
             if(score < minScore):
