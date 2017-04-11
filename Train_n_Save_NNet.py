@@ -246,12 +246,16 @@ def GetLoss(_mst_adj_graph, _mask_de_correct_edges, _WScalarMat):
 class Trainer:
     def __init__(self, modelFile = None):
         if modelFile is None:
-            self.hidden_layer_size = 1200
-            self._edge_vector_dim = 1500
+            self._edge_vector_dim = 2000
+            self.hidden_layer_size = 60
             # self._edge_vector_dim = WD._edge_vector_dim
             # self._full_cnglist = list(WD.mat_cngCount_1D)
-            
             self.neuralnet = NN(self._edge_vector_dim, self.hidden_layer_size, outer_relu=True)
+            
+            # DeepR Network
+            self.hidden_layer_size2 = 20
+            #self.neuralnet = NN_2(self._edge_vector_dim, self.hidden_layer_size,\
+            #                      hidden_layer_2_size = self.hidden_layer_size2, outer_relu=True)
             self.history = defaultdict(lambda: list())
         else:
             loader = pickle.load(open(filename, 'rb'))
@@ -269,11 +273,21 @@ class Trainer:
             self.history = defaultdict(lambda: list())
             
         # SET LEARNING RATES
-        self.neuralnet.etaW = 3e-4
-        self.neuralnet.etaB1 = 1e-4
-        
-        self.neuralnet.etaU = 1e-4
-        self.neuralnet.etaB2 = 1e-4
+        if self.neuralnet.version == 'h1':
+            self.neuralnet.etaW = 3e-4
+            self.neuralnet.etaB1 = 1e-4
+
+            self.neuralnet.etaU = 1e-4
+            self.neuralnet.etaB2 = 1e-4
+        elif self.neuralnet.version == 'h2':
+            self.neuralnet.etaW1 = 3e-4
+            self.neuralnet.etaB1 = 1e-4
+
+            self.neuralnet.etaW2 = 1e-4
+            self.neuralnet.etaB2 = 1e-4
+            
+            self.neuralnet.etaU = 1e-4
+            self.neuralnet.etaB3 = 1e-4
             
     def Reset(self):
         self.neuralnet = NN(self._edge_vector_dim, self.hidden_layer_size)
@@ -281,29 +295,71 @@ class Trainer:
         
     def Save(self, filename):
         print('Weights Saved: ', filename)
-        pickle.dump({
-                'U': self.neuralnet.U,
-                'W': self.neuralnet.W,
-                'n': self.neuralnet.n,
-                'd': self.neuralnet.d,
-                'B1': self.neuralnet.B1,
-                'B2': self.neuralnet.B2
-            }, open(filename, 'wb'))
-        return
+        if self.neuralnet.version == 'h1':
+            pickle.dump({
+                    'U': self.neuralnet.U,
+                    'W': self.neuralnet.W,
+                    'n': self.neuralnet.n,
+                    'd': self.neuralnet.d,
+                    'B1': self.neuralnet.B1,
+                    'B2': self.neuralnet.B2,
+                    'version': self.neuralnet.version
+                }, open(filename, 'wb'))
+            return
+        elif self.neuralnet.version == 'h2':
+            pickle.dump({
+                    'U': self.neuralnet.U,
+                    'B3': self.neuralnet.B3,
+                    'W2': self.neuralnet.W2,
+                    'B2': self.neuralnet.B2,
+                    'W1': self.neuralnet.W1,
+                    'B1': self.neuralnet.B1,
+                    'h1': self.neuralnet.h1,
+                    'h2': self.neuralnet.h2,
+                    'd': self.neuralnet.d,
+                    'version': self.neuralnet.version
+                }, open(filename, 'wb'))
+            return
         
     
     def Load(self, filename):
         loader = pickle.load(open(filename, 'rb'))
-        self.neuralnet.U = loader['U']
-        self.neuralnet.W = loader['W']
-        self.neuralnet.B1 = loader['B1']
-        self.neuralnet.B2 = loader['B2']
-        self.neuralnet.hidden_layer_size = loader['n']
-        self.neuralnet._edge_vector_dim = loader['d']
+        if 'version' not in loader: # means 1 hidden layer
+            self.neuralnet = NN(self._edge_vector_dim, self.hidden_layer_size, outer_relu=True)
+            self.neuralnet.U = loader['U']
+            self.neuralnet.W = loader['W']
+            self.neuralnet.B1 = loader['B1']
+            self.neuralnet.B2 = loader['B2']
+            self.neuralnet.hidden_layer_size = loader['n']
+            self.neuralnet._edge_vector_dim = loader['d']
+        else:
+            if loader['version'] == 'h1':
+                self.neuralnet = NN(self._edge_vector_dim, self.hidden_layer_size, outer_relu=True)
+                self.neuralnet.U = loader['U']
+                self.neuralnet.W = loader['W']
+                self.neuralnet.B1 = loader['B1']
+                self.neuralnet.B2 = loader['B2']
+                self.neuralnet.hidden_layer_size = loader['n']
+                self.neuralnet._edge_vector_dim = loader['d']
+            elif loader['version'] == 'h2':
+                self.neuralnet = NN_2(self._edge_vector_dim, self.hidden_layer_size, outer_relu=True)
+                
+                self.neuralnet.U = loader['U']
+                self.neuralnet.B3 = loader['B3']
+                
+                self.neuralnet.W2 = loader['W2']
+                self.neuralnet.B2 = loader['B2']
+                
+                self.neuralnet.W1 = loader['W1']
+                self.neuralnet.B1 = loader['B1']
+                
+                self.neuralnet.h1 = loader['h1']
+                self.neuralnet.h2 = loader['h2']
+                self.neuralnet.d = loader['d']
         
-    def Test(self, sentenceObj, dcsObj, dsbz2_name, _dump = False, _outFolder = None):
+    def Test(self, sentenceObj, dcsObj, dsbz2_name, _dump = False, _outFile = None):
         if _dump:
-            if _outFolder is None:
+            if _outFile is None:
                 raise Exception('WTH r u thinking! pass me outFolder')
         neuralnet = self.neuralnet
         minScore = np.inf
@@ -336,8 +392,23 @@ class Trainer:
         word_match = 0
         lemma_match = 0
         n_output_nodes = 0
+        
+        if _dump:
+            predicted_lemmas = [sentenceObj.sent_id]
+            predicted_cngs = [sentenceObj.sent_id]
+            predicted_chunk_id = [sentenceObj.sent_id]
+            predicted_pos = [sentenceObj.sent_id]
+            predicted_id = [sentenceObj.sent_id]
+        
         for chunk_id, wdSplit in minMst.items():
             for wd in wdSplit:
+                if _dump:
+                    predicted_lemmas.append(wd.lemma)
+                    predicted_cngs.append(wd.cng)
+                    predicted_chunk_id.append(wd.chunk_id)
+                    predicted_pos.append(wd.pos)
+                    predicted_id.append(wd.id)
+                    
                 n_output_nodes += 1
                 # Match lemma
                 search_result = [i for i, j in enumerate(dcsLemmas[chunk_id]) if j == wd.lemma]
@@ -350,6 +421,16 @@ class Trainer:
                         # print(wd.lemma, wd.cng)
                         break
         dcsLemmas = [l for arr in dcsObj.lemmas for l in arr]
+        
+        if _dump:
+            with open(_outFile, 'a') as fh:
+                dcsv = csv.writer(fh)
+                dcsv.writerow(predicted_lemmas)
+                dcsv.writerow(predicted_cngs)
+                dcsv.writerow(predicted_chunk_id)
+                dcsv.writerow(predicted_pos)
+                dcsv.writerow(predicted_id)
+                dcsv.writerow([sentenceObj.sent_id, word_match, lemma_match, len(dcsLemmas), n_output_nodes])
         
         # print('All MST Time: ', time.time() - startT)
         # print('Node Count: ', len(nodelist))
@@ -457,7 +538,10 @@ def register_nnet(nnet, bz2_input_folder):
             csv_r.writerow(['odir', 'p_name', 'hidden_layer_size', '_edge_vector_dim'])
     with open('outputs/nnet_LOGS.csv', 'a') as fh:
         csv_r = csv.writer(fh)
-        csv_r.writerow([odir, p_name, nnet.n, nnet.d, bz2_input_folder])
+        if nnet.version == 'h1':
+            csv_r.writerow([odir, p_name, nnet.n, nnet.d, bz2_input_folder])
+        elif nnet.version == 'h2':
+            csv_r.writerow([odir, p_name, nnet.h1, nnet.h2, nnet.d, bz2_input_folder])
 
 """
 ################################################################################################
@@ -484,7 +568,7 @@ def main():
         for line in opener:
             excluded_files.append(line[1].replace('.p', '.ds.bz2'))
 
-    bz2_input_folder = '../NewData/skt_dcs_DS.bz2_4K_pmi_mir_10K/'
+    bz2_input_folder = '../NewData/skt_dcs_DS.bz2_4K_bigram_rfe_10K/'
     # bz2_input_folder = '/home/rs/15CS91R05/vishnu/Data/skt_dcs_DS.bz2_compat_10k_check_again/'
     all_files = []
     skipped = 0

@@ -35,11 +35,11 @@ else:
     outFolder = '../NewData/skt_dcs_DS.bz2/'
 
 conversion_file_list = list(loaded_DCS.keys())
-outFolder = '../NewData/skt_dcs_DS.bz2_4K_pmi_rfe_10K/'
+outFolder = '../NewData/skt_dcs_DS.bz2_1L_bigram_rfe_10K/'
 
 ## SPECIAL - HELD OUT DATASET - OVERWRITES
 #'''
-outFolder = '../NewData/skt_dcs_DS.bz2_4K_pmi_rfe_heldout/'
+outFolder = '../NewData/skt_dcs_DS.bz2_1L_bigram_rfe_heldout/'
 baseline_filelist = []
 with open('inputs/Baseline4_advSample.csv') as f:
     baseline_reader = csv.reader(f)
