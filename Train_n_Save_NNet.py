@@ -246,17 +246,20 @@ def GetLoss(_mst_adj_graph, _mask_de_correct_edges, _WScalarMat):
 class Trainer:
     def __init__(self, modelFile = None):
         if modelFile is None:
-            self._edge_vector_dim = 2000
-            self.hidden_layer_size = 60
+            self._edge_vector_dim = 1500
+            self.hidden_layer_size = 150
             # self._edge_vector_dim = WD._edge_vector_dim
             # self._full_cnglist = list(WD.mat_cngCount_1D)
             self.neuralnet = NN(self._edge_vector_dim, self.hidden_layer_size, outer_relu=True)
             
             # DeepR Network
+            '''
+            self.hidden_layer_size = 150
             self.hidden_layer_size2 = 20
-            #self.neuralnet = NN_2(self._edge_vector_dim, self.hidden_layer_size,\
-            #                      hidden_layer_2_size = self.hidden_layer_size2, outer_relu=True)
+            self.neuralnet = NN_2(self._edge_vector_dim, self.hidden_layer_size,\
+                                  hidden_layer_2_size = self.hidden_layer_size2, outer_relu=True)
             self.history = defaultdict(lambda: list())
+            #'''
         else:
             loader = pickle.load(open(filename, 'rb'))
             
@@ -357,6 +360,46 @@ class Trainer:
                 self.neuralnet.h2 = loader['h2']
                 self.neuralnet.d = loader['d']
         
+    def CalculateLoss_n_Grads(self, WScalarMat, min_st_adj_worst, max_st_adj_gold, loss_type = 0, min_marginalized_energy = None):
+        doBpp = True
+        
+        # Claculate the enrgies
+        etg = np.sum(WScalarMat[max_st_adj_gold])
+        etq = np.sum(WScalarMat[min_st_adj_worst])
+        
+        if loss_type == 0:
+            # Variable Hinge Loss - CHECKED
+            L = etg - min_marginalized_energy
+            if L > 0:
+                dLdOut = np.zeros_like(WScalarMat)
+                dLdOut[max_st_adj_gold&(~min_st_adj_worst)] = 1
+                dLdOut[(~max_st_adj_gold)&min_st_adj_worst] = -1
+            else:
+                doBpp = False
+                return (L, None, doBpp)
+        elif loss_type == 1:
+            # LOg Loss
+            a = etg - etq
+            b = np.exp(a)
+            L = np.log(1 + b)
+            
+            dLdOut = np.zeros_like(WScalarMat)
+            dLdOut[max_st_adj_gold&(~min_st_adj_worst)] = 1
+            dLdOut[(~max_st_adj_gold)&min_st_adj_worst] = -1
+            
+            dLdOut *= (b/(1 + b))
+        elif loss_type == 2:
+            # Square exponential loss
+            gamma = 1
+            b = np.exp(-etq)
+            
+            L = etg**2 + gamma*b
+            
+            dLdOut = np.zeros_like(WScalarMat)
+            dLdOut[max_st_adj_gold&(~min_st_adj_worst)] = 2*etg
+            dLdOut[(~max_st_adj_gold)&min_st_adj_worst] = -gamma*b
+            pass
+        return (L, dLdOut, doBpp)
     def Test(self, sentenceObj, dcsObj, dsbz2_name, _dump = False, _outFile = None):
         if _dump:
             if _outFile is None:
@@ -489,11 +532,22 @@ class Trainer:
         if np.sum(select_flag) == 0:
             select_flag[np.random.randint(n_nodes)] = 1
         
+        best_node_diff = np.Inf
+        best_energy = np.Inf
         for source in range(len(nodelist)):
             (mst_nodes, mst_adj_graph, mst_nodes_bool) = MST(nodelist, WScalarMat, conflicts_Dict, source) # T_X
-            # print('.', end = '')
-           
-            marginalized_en = np.sum(WScalarMat[mst_adj_graph]) - margin_f(mst_nodes_bool)
+            # Calculate energy of spanning tree
+            en_st = np.sum(WScalarMat[mst_adj_graph])
+            
+            # Pick up the node_diff with lowest energy
+            delta_st = margin_f(mst_nodes_bool)
+            if _debug:
+                if best_energy > en_st:
+                    best_node_diff = delta_st
+                    best_energy = en_st
+                
+            # Minimum marginalized energy calculation
+            marginalized_en = en_st - delta_st
             # Minimum marginalized spanning tree : Randomization applied
             # if marginalized_en < min_marginalized_energy and select_flag[source]:
             if marginalized_en < min_marginalized_energy:
@@ -504,15 +558,13 @@ class Trainer:
                 print('Source: [{}], Node_Diff:{}, Max_Gold_En: {:.3f}, Energy: {:.3f}'.\
                       format(source, np.sum((~gold_nodes_mask)&mst_nodes_bool), energy_gold_max_ST,  np.sum(WScalarMat[mst_adj_graph])))
 
+        if _debug:
+            print('Best Node diff: {} with EN: {}'.format(np.sqrt(best_node_diff), best_energy))
         """ Gradient Descent """
-        # FOR MOST OFFENdING Y
-        doBpp = False
-        
-        Total_Loss = energy_gold_max_ST - min_marginalized_energy
-        if Total_Loss > 0:
-            dLdOut = np.zeros_like(WScalarMat)
-            dLdOut[max_st_adj_gold&(~min_STx)] = 1
-            dLdOut[(~max_st_adj_gold)&min_STx] = -1
+        # LOSS TYPES -> hinge(0), log-loss(1), square-exponential(2)
+        Total_Loss, dLdOut, doBpp = self.CalculateLoss_n_Grads(WScalarMat, min_STx, max_st_adj_gold,\
+                                                                 loss_type = 0, min_marginalized_energy = min_marginalized_energy)
+        if doBpp:
             if _debug:
                 print('{}. '.format(sentenceObj.sent_id), end = '')
             self.neuralnet.Back_Prop(dLdOut, len(nodelist), featVMat, _debug)
@@ -568,7 +620,12 @@ def main():
         for line in opener:
             excluded_files.append(line[1].replace('.p', '.ds.bz2'))
 
-    bz2_input_folder = '../NewData/skt_dcs_DS.bz2_4K_bigram_rfe_10K/'
+    # Load Simultaneous files
+    print('Loading Large Files')
+    loaded_SKT = pickle.load(open('../Simultaneous_CompatSKT_10K.p', 'rb'), encoding=u'utf-8')
+    loaded_DCS = pickle.load(open('../Simultaneous_DCS_10K.p', 'rb'), encoding=u'utf-8')
+
+    bz2_input_folder = '../NewData/skt_dcs_DS.bz2_1L_bigram_10K/'
     # bz2_input_folder = '/home/rs/15CS91R05/vishnu/Data/skt_dcs_DS.bz2_compat_10k_check_again/'
     all_files = []
     skipped = 0
@@ -577,6 +634,9 @@ def main():
             if f in excluded_files:
                 skipped += 1
                 continue
+            if f.replace('.ds.bz2', '.p2') not in loaded_DCS:
+                print('Couldnt find ', f)
+                continue
             all_files.append(f)
 
     print(skipped, 'files will not be used for training')
@@ -584,10 +644,7 @@ def main():
 
     TrainFiles = all_files    
     
-    # Load Simultaneous files
-    print('Loading Large Files')
-    loaded_SKT = pickle.load(open('../Simultaneous_CompatSKT_10K.p', 'rb'), encoding=u'utf-8')
-    loaded_DCS = pickle.load(open('../Simultaneous_DCS_10K.p', 'rb'), encoding=u'utf-8')
+    
     
     InitModule()
     trainingStatus = defaultdict(lambda: bool(False))
