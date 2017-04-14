@@ -20,8 +20,8 @@ def pooled_Test(modelFile, vpid, queue, testfolder, filePerProcess = 100, _dump 
     if _dump:
         _outFile = '{}_proc{}.csv'.format(_outFile, vpid)
             
-    loaded_SKT = pickle.load(open('../Simultaneous_CompatSKT.p', 'rb'))
-    loaded_DCS = pickle.load(open('../Simultaneous_DCS.p', 'rb'))
+    loaded_SKT = pickle.load(open('../Simultaneous_CompatSKT_ho.p', 'rb'))
+    loaded_DCS = pickle.load(open('../Simultaneous_DCS_ho.p', 'rb'))
     
     #loader = pickle.load(open('../bz2Dataset_10K.p', 'rb'))
     #TestFiles = loader['TestFiles']

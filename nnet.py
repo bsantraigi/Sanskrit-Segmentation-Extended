@@ -48,7 +48,7 @@ def d_lrelu(vec_x):
 """
 
 class NN:
-    def __init__(self, input_dimension, hidden_layer_size, outer_relu = True):
+    def __init__(self, input_dimension, hidden_layer_size, outer_relu = True, keep_prob = 1.0):
         # d: Input feature dimension i.e. the dimension of the edge feature vectors
         # n: Hidden layer size
         
@@ -80,11 +80,46 @@ class NN:
         self.etaB2 = None
         
         self.version = 'h1'
+        
+        # Dropout
+        self.keep_prob = keep_prob
+        self.dropout_prob = 1 - keep_prob
+        self.r1 = np.ones((input_dimension, 1)) # One hot for input layer
+        self.r2 = np.ones(self.B1.shape) # one hot for hidden layer
+        
+        self.training_time = True
 
+    def new_dropout(self):
+        self.r1 = np.random.binomial(1, self.keep_prob, size=self.r1.shape)
+        self.r2 = np.random.binomial(1, self.keep_prob, size=self.r2.shape)
+    def ForTraining(self):
+        self.training_time = True
+    def ForTesting(self):
+        self.training_time = False
     def Forward_Prop(self, x):
-        z2 = np.matmul(self.W, x) + self.B1
+        if self.training_time:
+            z2 = np.matmul(self.W, x*self.r1) + self.B1
+            a2 = lrelu(z2)*self.r2
+            o = np.matmul(self.U.transpose(), a2) + self.B2
+        else:
+            z2 = np.matmul(self.keep_prob*self.W, x) + self.B1
+            a2 = lrelu(z2)
+            o = np.matmul(self.keep_prob*self.U.transpose(), a2) + self.B2
+            
+        if self.outer_relu:
+            # s = relu(o)
+            s = o
+        else:
+            raise Exception('Support for Non-Outer_Relu removed')
+            s = sigmoid(o)
+            
+        return (z2, a2, s)
+    
+    '''
+    def Forward_Prop(self, x):
+        z2 = np.matmul(self.keep_prob*self.W, x) + self.B1
         a2 = lrelu(z2)
-        o = np.matmul(self.U.transpose(), a2) + self.B2
+        o = np.matmul(self.keep_prob*self.U.transpose(), a2) + self.B2
         if self.outer_relu:
             # s = relu(o)
             s = o
@@ -92,7 +127,7 @@ class NN:
             raise Exception('Support for Non-Outer_Relu removed')
             s = sigmoid(o)
         return (z2, a2, s)
-    
+    '''
     def Get_Energy(self, x):
         z2 = np.matmul(self.W, x) + self.B1
         a2 = lrelu(z2)
@@ -132,7 +167,8 @@ class NN:
                 for j in range(N):
                     if dLdOut[i, j] != 0 and (featVMat[i][j] is not None):
                         batch_size += 1
-                        (z2, a2, s) = self.Forward_Prop(featVMat[i][j])
+                        x = featVMat[i][j]
+                        (z2, a2, s) = self.Forward_Prop(x)
                         # print(a2.transpose())
                         # print('o')
                         # print(np.matmul(self.U.transpose(), a2))
@@ -142,18 +178,10 @@ class NN:
                         dLdB2 += dLdOut[i, j]
 
                         dRelu = d_lrelu(z2)
-                        dLdW += (dLdOut[i, j])*(self.U*dRelu)*featVMat[i][j].transpose()
+                        dLdW += (dLdOut[i, j])*np.matmul((self.U*dRelu), (x*self.r1).transpose())
 
                         dLdB1 += dLdOut[i, j]*np.matmul(self.U.transpose(), dRelu)
 
-                        # for k in range(self.n):
-                        #     if dRelu[k] != 0:
-                        #         dLdW[k, :, None] += (dLdOut[i, j])*self.U[k]*dRelu[k]*(featVMat[i][j])
-            # print('dlDW:')
-            # print(dLdW/(batch_size))
-            # print('dlDU:')
-            # print(dLdU/(batch_size))
-            # print('Batch size: ', batch_size)
             if batch_size > 0:
                 delW = etaW*dLdW/(batch_size)
                 delU = etaU*dLdU/(batch_size)
