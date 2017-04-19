@@ -120,7 +120,7 @@ trainingStatus = defaultdict(lambda: bool(False))
 ################################################################################################
 """
 
-def train_generator(loaded_SKT, loaded_DCS, bz2_input_folder, n_trainset = -1, iterationPerBatch = 10, filePerBatch = 20, _debug = True):
+def train_generator(loaded_SKT, loaded_DCS, bz2_input_folder, n_trainset = -1, iterationPerBatch = 10, filePerBatch = 20, _debug = True, superEpochs = 1):
     # Train
     if n_trainset == -1:
         n_trainset = len(TrainFiles)
@@ -129,41 +129,43 @@ def train_generator(loaded_SKT, loaded_DCS, bz2_input_folder, n_trainset = -1, i
         totalBatchToTrain = math.ceil(n_trainset/filePerBatch)
     
     register_nnet(trainer.neuralnet, bz2_input_folder)
-    for iterout in range(totalBatchToTrain):
-        # Add timer
-        startT = time.time()
+    
+    for _epoch in range(superEpochs):
+        for iterout in range(totalBatchToTrain):
+            # Add timer
+            startT = time.time()
 
-        # Change current batch
-        if(iterout % 50 == 0):
-            trainer.Save(p_name.replace('.p', '_i{}.p'.format(iterout)))
-        else:
-            trainer.Save(p_name)
-        print('Batch: ', iterout)
-        files_for_batch = TrainFiles[iterout*filePerBatch:(iterout + 1)*filePerBatch]
-        print(files_for_batch)
-        # trainer.Load('outputs/neuralnet_trained.p')
-        try:
-            # Run few times on same set of files
-            for iterin in range(iterationPerBatch):
-                print('ITERATION IN', iterin)        
-                for fn in files_for_batch:
-                    trainFileName = fn.replace('.ds.bz2', '.p2')
-                    sentenceObj = loaded_SKT[trainFileName]
-                    dcsObj = loaded_DCS[trainFileName]
-                    if trainingStatus[sentenceObj.sent_id]:
-                        continue
-                    # trainer.Save('outputs/saved_trainer.p')
-                    try:
-                        trainer.Train(sentenceObj, dcsObj, bz2_input_folder, _debug)
-                    except (IndexError, KeyError) as e:
-                        print('\x1b[31mFailed: {} \x1b[0m'.format(sentenceObj.sent_id))
-                sys.stdout.flush() # Flush IO buffer 
-            finishT = time.time()
-            print('Avg. time taken by 1 file(1 iteration): {:.3f}'.format((finishT - startT)/(iterationPerBatch*filePerBatch)))
-        except KeyboardInterrupt:
-            print('Training paused')
-            trainer.Save(p_name)
-            yield None
+            # Change current batch
+            if(iterout % 50 == 0):
+                trainer.Save(p_name.replace('.p', '_i{}.p'.format(iterout)))
+            else:
+                trainer.Save(p_name)
+            print('Epoch: {}, Batch: {}'.format(_epoch, iterout))
+            files_for_batch = TrainFiles[iterout*filePerBatch:(iterout + 1)*filePerBatch]
+            # print(files_for_batch)
+            # trainer.Load('outputs/neuralnet_trained.p')
+            try:
+                # Run few times on same set of files
+                for iterin in range(iterationPerBatch):
+                    print('ITERATION IN', iterin)        
+                    for fn in files_for_batch:
+                        trainFileName = fn.replace('.ds.bz2', '.p2')
+                        sentenceObj = loaded_SKT[trainFileName]
+                        dcsObj = loaded_DCS[trainFileName]
+                        if trainingStatus[sentenceObj.sent_id]:
+                            continue
+                        # trainer.Save('outputs/saved_trainer.p')
+                        try:
+                            trainer.Train(sentenceObj, dcsObj, bz2_input_folder, _debug)
+                        except (IndexError, KeyError) as e:
+                            print('\x1b[31mFailed: {} \x1b[0m'.format(sentenceObj.sent_id))
+                    sys.stdout.flush() # Flush IO buffer 
+                finishT = time.time()
+                print('Avg. time taken by 1 file(1 iteration): {:.3f}'.format((finishT - startT)/(iterationPerBatch*filePerBatch)))
+            except KeyboardInterrupt:
+                print('Training paused')
+                trainer.Save(p_name)
+                yield None
     trainer.Save(p_name)
                 
 def test(loaded_SKT, loaded_DCS, n_testSet = -1, _testFiles = None, n_checkpt = 100):
@@ -246,20 +248,19 @@ def GetLoss(_mst_adj_graph, _mask_de_correct_edges, _WScalarMat):
 class Trainer:
     def __init__(self, modelFile = None):
         if modelFile is None:
+            singleLayer = True
             self._edge_vector_dim = 1500
-            self.hidden_layer_size = 150
-            # self._edge_vector_dim = WD._edge_vector_dim
-            # self._full_cnglist = list(WD.mat_cngCount_1D)
-            self.neuralnet = NN(self._edge_vector_dim, self.hidden_layer_size, outer_relu=True)
-            
-            # DeepR Network
-            '''
-            self.hidden_layer_size = 150
-            self.hidden_layer_size2 = 20
-            self.neuralnet = NN_2(self._edge_vector_dim, self.hidden_layer_size,\
-                                  hidden_layer_2_size = self.hidden_layer_size2, outer_relu=True)
-            self.history = defaultdict(lambda: list())
-            #'''
+            if singleLayer:
+                self.hidden_layer_size = 1200
+                keep_prob = 0.6
+                self.neuralnet = NN(self._edge_vector_dim, self.hidden_layer_size, outer_relu=True, keep_prob=keep_prob)
+            else:
+                # DeepR Network
+                self.hidden_layer_size = 800
+                self.hidden_layer_size2 = 800
+                self.neuralnet = NN_2(self._edge_vector_dim, self.hidden_layer_size,\
+                                      hidden_layer_2_size = self.hidden_layer_size2, outer_relu=True)
+                self.history = defaultdict(lambda: list())
         else:
             loader = pickle.load(open(filename, 'rb'))
             
@@ -277,11 +278,11 @@ class Trainer:
             
         # SET LEARNING RATES
         if self.neuralnet.version == 'h1':
-            self.neuralnet.etaW = 3e-4
-            self.neuralnet.etaB1 = 1e-4
+            self.neuralnet.etaW = 3e-5
+            self.neuralnet.etaB1 = 1e-5
 
-            self.neuralnet.etaU = 1e-4
-            self.neuralnet.etaB2 = 1e-4
+            self.neuralnet.etaU = 1e-5
+            self.neuralnet.etaB2 = 1e-5
         elif self.neuralnet.version == 'h2':
             self.neuralnet.etaW1 = 3e-4
             self.neuralnet.etaB1 = 1e-4
@@ -291,6 +292,7 @@ class Trainer:
             
             self.neuralnet.etaU = 1e-4
             self.neuralnet.etaB3 = 1e-4
+            
             
     def Reset(self):
         self.neuralnet = NN(self._edge_vector_dim, self.hidden_layer_size)
@@ -306,6 +308,7 @@ class Trainer:
                     'd': self.neuralnet.d,
                     'B1': self.neuralnet.B1,
                     'B2': self.neuralnet.B2,
+                    'keep_prob': self.neuralnet.keep_prob,
                     'version': self.neuralnet.version
                 }, open(filename, 'wb'))
             return
@@ -335,6 +338,10 @@ class Trainer:
             self.neuralnet.B2 = loader['B2']
             self.neuralnet.hidden_layer_size = loader['n']
             self.neuralnet._edge_vector_dim = loader['d']
+            if 'keep_prob' in loader:
+                self.neuralnet.keep_prob = loader['keep_prob']
+                self.neuralnet.dropout_prob = 1 - loader['keep_prob']
+            print('Keep Prob = {}, Dropout = {}'.format(self.neuralnet.keep_prob, self.neuralnet.dropout_prob))
         else:
             if loader['version'] == 'h1':
                 self.neuralnet = NN(self._edge_vector_dim, self.hidden_layer_size, outer_relu=True)
@@ -344,6 +351,10 @@ class Trainer:
                 self.neuralnet.B2 = loader['B2']
                 self.neuralnet.hidden_layer_size = loader['n']
                 self.neuralnet._edge_vector_dim = loader['d']
+                if 'keep_prob' in loader:
+                    self.neuralnet.keep_prob = loader['keep_prob']
+                    self.neuralnet.dropout_prob = 1 - loader['keep_prob']
+                print('Keep Prob = {}, Dropout = {}'.format(self.neuralnet.keep_prob, self.neuralnet.dropout_prob))
             elif loader['version'] == 'h2':
                 self.neuralnet = NN_2(self._edge_vector_dim, self.hidden_layer_size, outer_relu=True)
                 
@@ -404,6 +415,8 @@ class Trainer:
         if _dump:
             if _outFile is None:
                 raise Exception('WTH r u thinking! pass me outFolder')
+        if self.neuralnet.version == 'h1':
+            self.neuralnet.ForTesting()
         neuralnet = self.neuralnet
         minScore = np.inf
         minMst = None
@@ -482,6 +495,8 @@ class Trainer:
         return (word_match, lemma_match, len(dcsLemmas), n_output_nodes)
     
     def Train(self, sentenceObj, dcsObj, bz2_input_folder, _debug = True):
+        self.neuralnet.ForTraining()
+        self.neuralnet.new_dropout() # renew dropout setting
         # Hyperparameter for hinge loss: m
         m_hinge_param = 14
         
@@ -497,20 +512,20 @@ class Trainer:
                                                                       conflicts_Dict_correct, self.neuralnet)
         source = 0
         """ Find the max spanning tree : negative Weight matrix passed """
-#         (max_st_gold_ndict, max_st_adj_gold_small, _) =\
+#         (min_st_gold_ndict, min_st_adj_gold_small, _) =\
 #             MST(nodelist_correct, -WScalarMat_correct, conflicts_Dict_correct, source)
-        (max_st_gold_ndict, max_st_adj_gold_small, _) =\
-            MST(nodelist_correct, -WScalarMat_correct, conflicts_Dict_correct, source)
-        energy_gold_max_ST = np.sum(WScalarMat_correct[max_st_adj_gold_small])
+        (min_st_gold_ndict, min_st_adj_gold_small, _) =\
+            MST(nodelist_correct, WScalarMat_correct, conflicts_Dict_correct, source)
+        energy_gold_max_ST = np.sum(WScalarMat_correct[min_st_adj_gold_small])
         
         """ Convert correct spanning tree graph adj matrix to full marix dimensions """
         """ Create full-size adjacency matrix for correct_mst_small """
         nodelen = len(nodelist)
-        max_st_adj_gold = np.ndarray((nodelen, nodelen), np.bool)*False # T_STAR
-        for i in range(max_st_adj_gold_small.shape[0]):
-            for j in range(max_st_adj_gold_small.shape[1]):
-                max_st_adj_gold[nodelist_to_correct_mapping[i], nodelist_to_correct_mapping[j]] =\
-                    max_st_adj_gold_small[i, j]
+        min_st_adj_gold = np.ndarray((nodelen, nodelen), np.bool)*False # T_STAR
+        for i in range(min_st_adj_gold_small.shape[0]):
+            for j in range(min_st_adj_gold_small.shape[1]):
+                min_st_adj_gold[nodelist_to_correct_mapping[i], nodelist_to_correct_mapping[j]] =\
+                    min_st_adj_gold_small[i, j]
         
         """ Delta(Margin) Function : MASK FOR WHICH NODES IN NODELIST BELONG TO DCS """
         gold_nodes_mask = np.array([False]*len(nodelist))
@@ -541,6 +556,7 @@ class Trainer:
             
             # Pick up the node_diff with lowest energy
             delta_st = margin_f(mst_nodes_bool)
+
             if _debug:
                 if best_energy > en_st:
                     best_node_diff = delta_st
@@ -557,12 +573,13 @@ class Trainer:
             if _debug:
                 print('Source: [{}], Node_Diff:{}, Max_Gold_En: {:.3f}, Energy: {:.3f}'.\
                       format(source, np.sum((~gold_nodes_mask)&mst_nodes_bool), energy_gold_max_ST,  np.sum(WScalarMat[mst_adj_graph])))
-
+        
+        
         if _debug:
             print('Best Node diff: {} with EN: {}'.format(np.sqrt(best_node_diff), best_energy))
         """ Gradient Descent """
         # LOSS TYPES -> hinge(0), log-loss(1), square-exponential(2)
-        Total_Loss, dLdOut, doBpp = self.CalculateLoss_n_Grads(WScalarMat, min_STx, max_st_adj_gold,\
+        Total_Loss, dLdOut, doBpp = self.CalculateLoss_n_Grads(WScalarMat, min_STx, min_st_adj_gold,\
                                                                  loss_type = 0, min_marginalized_energy = min_marginalized_energy)
         if doBpp:
             if _debug:
@@ -625,7 +642,10 @@ def main():
     loaded_SKT = pickle.load(open('../Simultaneous_CompatSKT_10K.p', 'rb'), encoding=u'utf-8')
     loaded_DCS = pickle.load(open('../Simultaneous_DCS_10K.p', 'rb'), encoding=u'utf-8')
 
-    bz2_input_folder = '../NewData/skt_dcs_DS.bz2_1L_bigram_10K/'
+    # loaded_SKT = pickle.load(open('../Simultaneous_CompatSKT.p', 'rb'), encoding=u'utf-8')
+    # loaded_DCS = pickle.load(open('../Simultaneous_DCS.p', 'rb'), encoding=u'utf-8')
+
+    bz2_input_folder = '../NewData/skt_dcs_DS.bz2_1L_bigram_mir_Large/'
     # bz2_input_folder = '/home/rs/15CS91R05/vishnu/Data/skt_dcs_DS.bz2_compat_10k_check_again/'
     all_files = []
     skipped = 0
@@ -642,14 +662,12 @@ def main():
     print(skipped, 'files will not be used for training')
     print('Size of training set:', len(all_files))
 
-    TrainFiles = all_files    
-    
-    
+    TrainFiles = all_files
     
     InitModule()
     trainingStatus = defaultdict(lambda: bool(False))
-    
-    train = train_generator(loaded_SKT, loaded_DCS, bz2_input_folder, n_trainset = -1, filePerBatch = 10, iterationPerBatch = 5, _debug=False)
+    # train = train_generator(loaded_SKT, loaded_DCS, bz2_input_folder, n_trainset = -1, filePerBatch = 10, iterationPerBatch = 5, _debug=False, superEpochs = 5)
+    train = train_generator(loaded_SKT, loaded_DCS, bz2_input_folder, n_trainset = -1, filePerBatch = 20, iterationPerBatch = 4, _debug=False, superEpochs = 1)
     
     # Complete Training
     train.__next__()
