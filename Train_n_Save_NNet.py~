@@ -158,7 +158,7 @@ def train_generator(loaded_SKT, loaded_DCS, bz2_input_folder, n_trainset = -1, i
                             trainer.Train(sentenceObj, dcsObj, bz2_input_folder, _debug)
                         except (IndexError, KeyError) as e:
                             print('\x1b[31mFailed: {} \x1b[0m'.format(sentenceObj.sent_id))
-                        except EOFError as e:
+                        except EOFError:
                             print('\x1b[31mBADFILE: {} \x1b[0m'.format(sentenceObj.sent_id))
                     sys.stdout.flush() # Flush IO buffer 
                 finishT = time.time()
@@ -250,7 +250,7 @@ class Trainer:
     def __init__(self, modelFile = None):
         if modelFile is None:
             singleLayer = True
-            self._edge_vector_dim = 1500
+            self._edge_vector_dim = 2000
             if singleLayer:
                 self.hidden_layer_size = 1200
                 keep_prob = 0.6
@@ -646,7 +646,7 @@ def main():
     # loaded_SKT = pickle.load(open('../Simultaneous_CompatSKT.p', 'rb'), encoding=u'utf-8')
     # loaded_DCS = pickle.load(open('../Simultaneous_DCS.p', 'rb'), encoding=u'utf-8')
 
-    bz2_input_folder = '../NewData/skt_dcs_DS.bz2_1L_bigram_10K/'
+    bz2_input_folder = '../NewData/skt_dcs_DS.bz2_4K_bigram_mir_10K/'
     # bz2_input_folder = '/home/rs/15CS91R05/vishnu/Data/skt_dcs_DS.bz2_compat_10k_check_again/'
     all_files = []
     skipped = 0
